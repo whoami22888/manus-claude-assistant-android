@@ -18,6 +18,8 @@ import android.widget.TextView
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.launch
 import java.util.Locale
 
 class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener, RecognitionListener {
@@ -97,9 +99,33 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener, Recogniti
         if (input.isEmpty()) return
         etInput.text.clear()
         appendMessage("You", input)
-        val response = assistantEngine.processInput(input)
-        appendMessage("Assistant", response)
-        speak(response)
+        // Disable send controls while waiting for the (potentially async) response
+        btnSend.isEnabled = false
+        btnMic.isEnabled = false
+        setStatus(getString(R.string.status_processing))
+        lifecycleScope.launch {
+            val response = assistantEngine.processInput(input)
+            appendMessage("Assistant", response)
+            speak(response)
+            btnSend.isEnabled = true
+            btnMic.isEnabled = true
+            setStatus(getString(R.string.status_ready))
+        }
+    }
+
+    private fun handleVoiceInput(recognizedText: String) {
+        appendMessage("You (voice)", recognizedText)
+        btnSend.isEnabled = false
+        btnMic.isEnabled = false
+        setStatus(getString(R.string.status_processing))
+        lifecycleScope.launch {
+            val response = assistantEngine.processInput(recognizedText)
+            appendMessage("Assistant", response)
+            speak(response)
+            btnSend.isEnabled = true
+            btnMic.isEnabled = true
+            setStatus(getString(R.string.status_ready))
+        }
     }
 
     private fun appendMessage(sender: String, message: String) {
@@ -204,14 +230,11 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener, Recogniti
 
     override fun onResults(results: Bundle?) {
         isListening = false
-        setStatus(getString(R.string.status_ready))
         val matches = results?.getStringArrayList(SpeechRecognizer.RESULTS_RECOGNITION)
         if (!matches.isNullOrEmpty()) {
-            val recognizedText = matches[0]
-            appendMessage("You (voice)", recognizedText)
-            val response = assistantEngine.processInput(recognizedText)
-            appendMessage("Assistant", response)
-            speak(response)
+            handleVoiceInput(matches[0])
+        } else {
+            setStatus(getString(R.string.status_ready))
         }
     }
 

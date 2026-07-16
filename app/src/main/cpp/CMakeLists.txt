@@ -2,29 +2,24 @@ cmake_minimum_required(VERSION 3.18)
 
 project(PersonalAssistantNative CXX)
 
-# Find the prebuilt shared core library
-# Assuming the shared core library is placed in a known location relative to this CMakeLists.txt
-# Adjust the path as necessary based on the actual project structure
-set(SHARED_CORE_LIB_DIR ${CMAKE_SOURCE_DIR}/../../../../shared_core/build)
-find_library(ASSISTANT_CORE_LIB
-             NAMES AssistantCore
-             PATHS ${SHARED_CORE_LIB_DIR}
-             NO_DEFAULT_PATH)
+# Build the shared_core logic as an in-tree static library so that no
+# external prebuilt .so is required.
+add_library(assistant_core STATIC
+            shared_core/core_logic.cpp)
 
-if(NOT ASSISTANT_CORE_LIB)
-    message(FATAL_ERROR "Shared core library (libAssistantCore.so) not found in ${SHARED_CORE_LIB_DIR}")
-endif()
+target_include_directories(assistant_core PUBLIC
+                           shared_core/include)
 
-# Add the native library for Android
+# JNI bridge — the shared library loaded by the Android runtime
 add_library(personalassistant_native SHARED
             jni_bridge.cpp)
 
-# Include directories
-include_directories(${CMAKE_SOURCE_DIR}/../../../../shared_core/include)
+target_include_directories(personalassistant_native PRIVATE
+                           shared_core/include)
 
-# Link against the Android log library and the prebuilt shared core library
+# Link against Android system libs and the in-tree static core
 target_link_libraries(personalassistant_native
                       android
                       log
-                      ${ASSISTANT_CORE_LIB})
+                      assistant_core)
 

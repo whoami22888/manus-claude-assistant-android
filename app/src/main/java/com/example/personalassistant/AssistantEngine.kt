@@ -1,20 +1,51 @@
 package com.example.personalassistant
 
+import android.util.Log
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 
 /**
- * Pure-Kotlin assistant engine.
+ * Assistant engine that tries the Groq AI API first and falls back to an
+ * offline rule-based implementation when the API is unavailable or the key
+ * is not configured.
  *
- * Replaces the missing native shared_core library with a rule-based
- * implementation that handles the same set of commands the JNI bridge
- * was wired to support: greetings, time/date queries, file operations,
- * and general-purpose fall-through.
+ * [processInput] is a suspend function and must be called from a coroutine
+ * (e.g. inside [androidx.lifecycle.lifecycleScope]).
  */
 class AssistantEngine {
 
-    fun processInput(input: String): String {
+    private val groqClient = GroqApiClient()
+
+    companion object {
+        private const val TAG = "AssistantEngine"
+    }
+
+    /**
+     * Process [input] via the Groq AI API with an offline rule-based fallback.
+     *
+     * When [BuildConfig.GROQ_API_KEY] is blank the local rules are used
+     * immediately without making a network call.
+     */
+    suspend fun processInput(input: String): String {
+        val apiKey = BuildConfig.GROQ_API_KEY
+        if (apiKey.isNotBlank()) {
+            return try {
+                withContext(Dispatchers.IO) {
+                    groqClient.chat(input, apiKey)
+                }
+            } catch (e: Exception) {
+                Log.w(TAG, "Groq API call failed, using local rules: ${e.message}")
+                processInputLocal(input)
+            }
+        }
+        return processInputLocal(input)
+    }
+
+    /** Offline rule-based fallback — always available, no network required. */
+    fun processInputLocal(input: String): String {
         val lower = input.lowercase(Locale.getDefault()).trim()
         return when {
             lower.contains("hello") || lower.contains("hi") || lower.contains("hey") ->
@@ -36,7 +67,7 @@ class AssistantEngine {
                 "Local files available: notes.txt, photo.jpg, document.pdf."
 
             lower.contains("help") ->
-                "I can help with:\n• Time and date queries\n• File operations (upload / download / list)\n• General questions\nJust type or speak your request!"
+                "I can help with:\n• Time and date queries\n• File operations (upload / download / list)\n• General questions — powered by Groq AI when a key is configured.\nJust type or speak your request!"
 
             lower.contains("bye") || lower.contains("goodbye") || lower.contains("exit") ->
                 "Goodbye! Have a great day!"
