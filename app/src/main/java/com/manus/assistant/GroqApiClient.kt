@@ -44,7 +44,8 @@ class GroqApiClient(
         private const val MODEL = "llama-3.3-70b-versatile"
         private val JSON_TYPE = "application/json; charset=utf-8".toMediaType()
 
-        /** Maximum number of user+assistant messages kept in history (10 turns = 20 messages). */
+        /** Maximum number of user+assistant messages kept in history (10 turns = 20 messages,
+         *  excluding the system prompt which is always prepended separately). */
         private const val MAX_HISTORY = 20
 
         private const val SYSTEM_PROMPT =

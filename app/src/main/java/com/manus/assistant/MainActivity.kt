@@ -247,7 +247,9 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener, Recogniti
         val currentKey = prefs.getString(PREF_API_KEY, "") ?: ""
         val editText = EditText(this).apply {
             setText(currentKey)
-            inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_PASSWORD
+            // VISIBLE_PASSWORD keeps the key readable (the user is intentionally
+            // inspecting and editing it) while avoiding password-manager autofill.
+            inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD
             hint = getString(R.string.api_key_hint)
             setPadding(48, 24, 48, 24)
         }
@@ -277,6 +279,7 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener, Recogniti
         if (uri.scheme == "content") {
             contentResolver.query(uri, null, null, null, null)?.use { cursor ->
                 if (cursor.moveToFirst()) {
+                    // getColumnIndex returns -1 when the column is absent; guard before use.
                     val idx = cursor.getColumnIndex(android.provider.OpenableColumns.DISPLAY_NAME)
                     if (idx >= 0) result = cursor.getString(idx)
                 }

@@ -118,7 +118,8 @@ class GroqApiClientTest {
     @Test fun `failed request does not add user message to history`() {
         server.enqueue(MockResponse().setResponseCode(500).setBody("Server error"))
         server.enqueue(successResponse("ok"))
-        try { client.chat("Failed message", "test-key") } catch (_: Exception) {}
+        // The failed call is expected to throw; swallow it intentionally so the test can continue.
+        try { client.chat("Failed message", "test-key") } catch (_: Exception) { /* expected */ }
         client.chat("Retry", "test-key")
         server.takeRequest() // consume failed request
         val body = server.takeRequest().body.readUtf8()
