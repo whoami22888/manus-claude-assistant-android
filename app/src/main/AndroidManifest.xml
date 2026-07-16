@@ -4,9 +4,9 @@
 
     <!-- Permissions for voice input/output -->
     <uses-permission android:name="android.permission.RECORD_AUDIO" />
-    <uses-permission android:name="android.permission.INTERNET" /> <!-- Potentially needed for TTS/STT services -->
+    <uses-permission android:name="android.permission.INTERNET" />
 
-    <!-- Permissions for cloud storage (placeholders) -->
+    <!-- Legacy external-storage permissions (API ≤ 32); SAF is used on API 33+. -->
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="28" />
 

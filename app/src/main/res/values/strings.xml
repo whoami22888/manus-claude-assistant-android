@@ -6,5 +6,24 @@
     <string name="hint_type_message">Type a message…</string>
     <string name="btn_send">Send</string>
     <string name="btn_mic">Voice input</string>
+    <string name="settings">Settings</string>
+
+    <!-- API key dialog -->
+    <string name="api_key_title">Groq API Key</string>
+    <string name="api_key_message">Enter your Groq API key. Leave blank to use the build-time default.</string>
+    <string name="api_key_hint">sk-…</string>
+    <string name="action_save">Save</string>
+    <string name="action_cancel">Cancel</string>
+    <string name="api_key_saved">API key saved. Groq AI is now active.</string>
+    <string name="api_key_cleared">API key cleared. Falling back to build default.</string>
+
+    <!-- File operations -->
+    <string name="file_upload_success">File selected: %s</string>
+    <string name="file_upload_cancelled">File selection cancelled.</string>
+    <string name="file_download_saved">Note saved successfully.</string>
+    <string name="file_download_error">Failed to save the file.</string>
+    <string name="file_download_cancelled">Save cancelled.</string>
+    <string name="file_list_empty">No files found in local storage.</string>
+    <string name="file_list_header">Local files:</string>
 </resources>
 

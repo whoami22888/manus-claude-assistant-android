@@ -1,9 +1,21 @@
 # Add project specific ProGuard rules here.
-# You can control the set of applied configuration files using the
-# proguardFiles setting in build.gradle.kts.
 
-# Uncomment this to preserve the line number information for debugging stack traces.
-#-keepattributes SourceFile,LineNumberTable
+# Preserve line number information for debugging stack traces.
+-keepattributes SourceFile,LineNumberTable
 
-# If you keep the line number information, uncomment this to hide the original source file name.
-#-renamesourcefileattribute SourceFile
+# Keep OkHttp and Okio (used by GroqApiClient) from being stripped.
+-dontwarn okhttp3.**
+-dontwarn okio.**
+-keep class okhttp3.** { *; }
+-keep interface okhttp3.** { *; }
+
+# Keep Kotlin coroutine internals needed at runtime.
+-keepclassmembernames class kotlinx.** {
+    volatile <fields>;
+}
+
+# Preserve the app's own classes (package was renamed from com.example.personalassistant).
+-keep class com.manus.assistant.** { *; }
+
+# Keep JSON parsing classes.
+-keep class org.json.** { *; }
