@@ -1,4 +1,10 @@
 <resources>
-    <string name="app_name">PersonalAssistant</string>
+    <string name="app_name">Personal Assistant</string>
+    <string name="status_ready">Ready</string>
+    <string name="status_listening">Listening…</string>
+    <string name="status_processing">Processing…</string>
+    <string name="hint_type_message">Type a message…</string>
+    <string name="btn_send">Send</string>
+    <string name="btn_mic">Voice input</string>
 </resources>
 
