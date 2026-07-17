@@ -1,7 +1,15 @@
 // Top-level build file where you can add configuration options common to all sub-projects/modules.
+val googleMavenRepositoryUrl =
+    providers.gradleProperty("googleMavenRepositoryUrl").orNull
+        ?: System.getenv("GOOGLE_MAVEN_REPOSITORY_URL")
+
 buildscript {
     repositories {
-        google()
+        if (googleMavenRepositoryUrl.isNullOrBlank()) {
+            google()
+        } else {
+            maven(url = googleMavenRepositoryUrl)
+        }
         mavenCentral()
     }
     dependencies {

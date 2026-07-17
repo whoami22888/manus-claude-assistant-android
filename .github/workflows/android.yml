@@ -12,6 +12,8 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
+    env:
+      GOOGLE_MAVEN_REPOSITORY_URL: ${{ secrets.GOOGLE_MAVEN_REPOSITORY_URL }}
 
     steps:
       - name: Checkout repository
