@@ -51,7 +51,8 @@ class GroqApiClient(
         private const val SYSTEM_PROMPT =
             "You are a helpful personal assistant running on an Android device. " +
             "Be concise — answer in 1-3 sentences. " +
-            "The app natively handles: current time, current date, file upload/download/list, " +
+            "The app natively handles: current time, current date, local file upload/download/list, " +
+            "cloud storage placeholders, JNI-backed native command checks, Python script loading, " +
             "and voice input/output. For those topics, you may mention the native feature."
     }
 
@@ -100,7 +101,10 @@ class GroqApiClient(
 
         val request = Request.Builder()
             .url(baseUrl)
-            .addHeader("Authorization", "Bearer $apiKey")
+            .addHeader("Authorization", buildString {
+                append("Bearer ")
+                append(apiKey)
+            })
             .post(bodyJson.toString().toRequestBody(JSON_TYPE))
             .build()
 

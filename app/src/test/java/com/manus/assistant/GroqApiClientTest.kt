@@ -70,6 +70,16 @@ class GroqApiClientTest {
         assertTrue("Request body should contain model field", body.contains("\"model\""))
     }
 
+    @Test fun `chat sends bearer authorization header`() {
+        server.enqueue(successResponse("ok"))
+        client.chat("hi", "test-key")
+        val request = server.takeRequest()
+        assertEquals(buildString {
+            append("Bearer ")
+            append("test-key")
+        }, request.getHeader("Authorization"))
+    }
+
     // -----------------------------------------------------------------------
     // Conversation history
     // -----------------------------------------------------------------------
@@ -118,12 +128,30 @@ class GroqApiClientTest {
     @Test fun `failed request does not add user message to history`() {
         server.enqueue(MockResponse().setResponseCode(500).setBody("Server error"))
         server.enqueue(successResponse("ok"))
-        // The failed call is expected to throw; swallow it intentionally so the test can continue.
-        try { client.chat("Failed message", "test-key") } catch (_: Exception) { /* expected */ }
+        val failedCall = runCatching { client.chat("Failed message", "test-key") }.exceptionOrNull()
+        assertTrue("Expected the failed call to throw", failedCall != null)
         client.chat("Retry", "test-key")
         server.takeRequest() // consume failed request
         val body = server.takeRequest().body.readUtf8()
         assertTrue("Failed message should not appear in retry request",
             !body.contains("Failed message"))
+    }
+
+    @Test fun `empty response does not add user message to history`() {
+        server.enqueue(
+            MockResponse()
+                .setResponseCode(200)
+                .addHeader("Content-Type", "application/json")
+                .setBody("")
+        )
+        server.enqueue(successResponse("ok"))
+        val emptyResponseFailure =
+            runCatching { client.chat("Empty response message", "test-key") }.exceptionOrNull()
+        assertTrue("Expected the empty response call to throw", emptyResponseFailure != null)
+        client.chat("Retry", "test-key")
+        server.takeRequest()
+        val body = server.takeRequest().body.readUtf8()
+        assertTrue("Empty-response message should not appear in retry request",
+            !body.contains("Empty response message"))
     }
 }

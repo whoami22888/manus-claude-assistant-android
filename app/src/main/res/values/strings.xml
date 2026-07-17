@@ -25,5 +25,8 @@
     <string name="file_download_cancelled">Save cancelled.</string>
     <string name="file_list_empty">No files found in local storage.</string>
     <string name="file_list_header">Local files:</string>
+    <string name="cloud_download_saved">Cloud placeholder note saved successfully.</string>
+    <string name="cloud_download_error">Failed to save the cloud placeholder file.</string>
+    <string name="cloud_download_cancelled">Cloud download cancelled.</string>
+    <string name="python_script_load_cancelled">Python script loading cancelled.</string>
 </resources>
-

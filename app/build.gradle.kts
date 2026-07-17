@@ -15,6 +15,7 @@ val groqApiKey: String =
 android {
     namespace = "com.manus.assistant"
     compileSdk = 34
+    ndkVersion = "26.1.10909125"
 
     defaultConfig {
         applicationId = "com.manus.assistant"
@@ -27,6 +28,12 @@ android {
 
         // Expose the Groq API key to the app via BuildConfig (empty string when unset)
         buildConfigField("String", "GROQ_API_KEY", "\"$groqApiKey\"")
+
+        externalNativeBuild {
+            cmake {
+                cppFlags += "-std=c++17"
+            }
+        }
     }
 
     signingConfigs {
@@ -71,6 +78,12 @@ android {
         viewBinding = true
         buildConfig = true
     }
+    externalNativeBuild {
+        cmake {
+            path = file("src/main/cpp/CMakeLists.txt")
+            version = "3.22.1"
+        }
+    }
 }
 
 dependencies {
@@ -89,4 +102,3 @@ dependencies {
     androidTestImplementation("androidx.test.ext:junit:1.1.5")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
 }
-
