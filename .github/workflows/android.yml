@@ -46,6 +46,9 @@ jobs:
           echo "KEY_ALIAS=${{ secrets.KEY_ALIAS }}" >> "$GITHUB_ENV"
           echo "KEY_PASSWORD=${{ secrets.KEY_PASSWORD }}" >> "$GITHUB_ENV"
 
+      - name: Run unit tests
+        run: ./gradlew test --no-daemon
+
       - name: Build debug APK
         run: ./gradlew assembleDebug --no-daemon
 
