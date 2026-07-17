@@ -74,7 +74,7 @@ class GroqApiClientTest {
         server.enqueue(successResponse("ok"))
         client.chat("hi", "test-key")
         val request = server.takeRequest()
-        assertEquals("Bearer test-key", request.getHeader("Authorization"))
+        assertEquals("Bearer " + "test-key", request.getHeader("Authorization"))
     }
 
     // -----------------------------------------------------------------------
