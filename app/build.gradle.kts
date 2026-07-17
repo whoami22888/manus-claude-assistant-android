@@ -1,7 +1,5 @@
-plugins {
-    id("com.android.application")
-    id("org.jetbrains.kotlin.android")
-}
+apply(plugin = "com.android.application")
+apply(plugin = "org.jetbrains.kotlin.android")
 
 // Read local.properties so developers can set groq.api.key there without
 // touching the build file.  CI uses the GROQ_API_KEY environment variable.
@@ -89,4 +87,3 @@ dependencies {
     androidTestImplementation("androidx.test.ext:junit:1.1.5")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
 }
-
