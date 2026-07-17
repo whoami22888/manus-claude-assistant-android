@@ -60,6 +60,11 @@ class AssistantEngineTest {
         assertTrue(response.startsWith("Today's date is"))
     }
 
+    @Test fun `'date' alone returns current date`() {
+        val response = respond("date")
+        assertTrue(response.startsWith("Today's date is"))
+    }
+
     // -----------------------------------------------------------------------
     // File operations
     // -----------------------------------------------------------------------
@@ -76,6 +81,11 @@ class AssistantEngineTest {
 
     @Test fun `list files returns descriptive hint`() {
         val response = respond("list files")
+        assertTrue(response.isNotBlank())
+    }
+
+    @Test fun `show files returns descriptive hint`() {
+        val response = respond("show files")
         assertTrue(response.isNotBlank())
     }
 
@@ -99,6 +109,10 @@ class AssistantEngineTest {
 
     @Test fun `goodbye triggers goodbye`() {
         assertTrue(respond("goodbye").contains("Goodbye", ignoreCase = true))
+    }
+
+    @Test fun `exit triggers goodbye`() {
+        assertTrue(respond("exit").contains("Goodbye", ignoreCase = true))
     }
 
     // -----------------------------------------------------------------------
@@ -134,5 +148,9 @@ class AssistantEngineTest {
 
     @Test fun `mixed case 'Hello World' triggers greeting`() {
         assertTrue(respond("Hello World").contains("Hello!", ignoreCase = true))
+    }
+
+    @Test fun `leading and trailing whitespace is ignored`() {
+        assertTrue(respond("  hello  ").contains("Hello!", ignoreCase = true))
     }
 }

@@ -70,6 +70,13 @@ class GroqApiClientTest {
         assertTrue("Request body should contain model field", body.contains("\"model\""))
     }
 
+    @Test fun `chat sends bearer authorization header`() {
+        server.enqueue(successResponse("ok"))
+        client.chat("hi", "test-key")
+        val request = server.takeRequest()
+        assertEquals("Bearer test-key", request.getHeader("Authorization"))
+    }
+
     // -----------------------------------------------------------------------
     // Conversation history
     // -----------------------------------------------------------------------
@@ -125,5 +132,21 @@ class GroqApiClientTest {
         val body = server.takeRequest().body.readUtf8()
         assertTrue("Failed message should not appear in retry request",
             !body.contains("Failed message"))
+    }
+
+    @Test fun `empty response does not add user message to history`() {
+        server.enqueue(
+            MockResponse()
+                .setResponseCode(200)
+                .addHeader("Content-Type", "application/json")
+                .setBody("")
+        )
+        server.enqueue(successResponse("ok"))
+        try { client.chat("Empty response message", "test-key") } catch (_: Exception) { /* expected */ }
+        client.chat("Retry", "test-key")
+        server.takeRequest()
+        val body = server.takeRequest().body.readUtf8()
+        assertTrue("Empty-response message should not appear in retry request",
+            !body.contains("Empty response message"))
     }
 }
