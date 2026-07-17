@@ -321,7 +321,7 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener, Recogniti
                 appendMessage(ChatMessage.Sender.ASSISTANT, response)
                 speak(response)
             } catch (e: Exception) {
-                Log.e(TAG, "Assistant processing failed: ${e.message}")
+                Log.e(TAG, "Assistant processing failed", e)
                 appendMessage(
                     ChatMessage.Sender.SYSTEM,
                     "Sorry, something went wrong while processing that request."
