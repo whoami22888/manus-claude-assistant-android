@@ -37,6 +37,8 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener, Recogniti
     }
 
     private val assistantEngine by lazy { AssistantEngine(this) }
+    private val cloudStorageManager by lazy { CloudStorageManager(this) }
+    private val pythonScriptManager by lazy { PythonScriptManager(this) }
 
     // Chat UI
     private lateinit var recyclerViewChat: RecyclerView
@@ -57,6 +59,8 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener, Recogniti
     private var speechRecognizer: SpeechRecognizer? = null
     private lateinit var recognizerIntent: Intent
     private var isListening = false
+    private var pendingOpenDocumentAction = OpenDocumentAction.LOCAL_UPLOAD
+    private var pendingCreateDocumentAction = CreateDocumentAction.LOCAL_DOWNLOAD
 
     // -----------------------------------------------------------------------
     // Storage Access Framework launchers
@@ -67,9 +71,23 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener, Recogniti
         registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
             if (uri != null) {
                 val fileName = getFileNameFromUri(uri)
-                appendMessage(ChatMessage.Sender.SYSTEM, getString(R.string.file_upload_success, fileName))
+                val message = when (pendingOpenDocumentAction) {
+                    OpenDocumentAction.LOCAL_UPLOAD ->
+                        getString(R.string.file_upload_success, fileName)
+                    OpenDocumentAction.CLOUD_UPLOAD ->
+                        cloudStorageManager.uploadPlaceholder(fileName)
+                    OpenDocumentAction.PYTHON_SCRIPT ->
+                        pythonScriptManager.loadScript(uri, contentResolver)
+                }
+                appendMessage(ChatMessage.Sender.SYSTEM, message)
             } else {
-                appendMessage(ChatMessage.Sender.SYSTEM, getString(R.string.file_upload_cancelled))
+                val cancelledMessage = when (pendingOpenDocumentAction) {
+                    OpenDocumentAction.PYTHON_SCRIPT ->
+                        getString(R.string.python_script_load_cancelled)
+                    else ->
+                        getString(R.string.file_upload_cancelled)
+                }
+                appendMessage(ChatMessage.Sender.SYSTEM, cancelledMessage)
             }
         }
 
@@ -78,19 +96,40 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener, Recogniti
         registerForActivityResult(ActivityResultContracts.CreateDocument("text/plain")) { uri ->
             if (uri != null) {
                 try {
-                    contentResolver.openOutputStream(uri)?.use { stream ->
-                        stream.write(
+                    val contents = when (pendingCreateDocumentAction) {
+                        CreateDocumentAction.LOCAL_DOWNLOAD ->
                             "Personal Assistant note — saved by the app.\n"
-                                .toByteArray(Charsets.UTF_8)
-                        )
+                        CreateDocumentAction.CLOUD_DOWNLOAD ->
+                            cloudStorageManager.createDownloadPlaceholder().contents
                     }
-                    appendMessage(ChatMessage.Sender.SYSTEM, getString(R.string.file_download_saved))
+                    contentResolver.openOutputStream(uri)?.use { stream ->
+                        stream.write(contents.toByteArray(Charsets.UTF_8))
+                    }
+                    val successMessage = when (pendingCreateDocumentAction) {
+                        CreateDocumentAction.LOCAL_DOWNLOAD ->
+                            getString(R.string.file_download_saved)
+                        CreateDocumentAction.CLOUD_DOWNLOAD ->
+                            getString(R.string.cloud_download_saved)
+                    }
+                    appendMessage(ChatMessage.Sender.SYSTEM, successMessage)
                 } catch (e: Exception) {
                     Log.e(TAG, "Failed to write file: ${e.message}")
-                    appendMessage(ChatMessage.Sender.SYSTEM, getString(R.string.file_download_error))
+                    val errorMessage = when (pendingCreateDocumentAction) {
+                        CreateDocumentAction.LOCAL_DOWNLOAD ->
+                            getString(R.string.file_download_error)
+                        CreateDocumentAction.CLOUD_DOWNLOAD ->
+                            getString(R.string.cloud_download_error)
+                    }
+                    appendMessage(ChatMessage.Sender.SYSTEM, errorMessage)
                 }
             } else {
-                appendMessage(ChatMessage.Sender.SYSTEM, getString(R.string.file_download_cancelled))
+                val cancelledMessage = when (pendingCreateDocumentAction) {
+                    CreateDocumentAction.LOCAL_DOWNLOAD ->
+                        getString(R.string.file_download_cancelled)
+                    CreateDocumentAction.CLOUD_DOWNLOAD ->
+                        getString(R.string.cloud_download_cancelled)
+                }
+                appendMessage(ChatMessage.Sender.SYSTEM, cancelledMessage)
             }
         }
 
@@ -169,20 +208,42 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener, Recogniti
     /**
      * Routes [input] to the appropriate handler before handing off to the
      * assistant engine:
-     * - "upload"      → SAF file picker
-     * - "download"    → SAF document creator
-     * - "list files"  → enumerate app's local storage
-     * - "clear"       → reset conversation history
-     * - everything else → AssistantEngine (Groq + local fallback)
+     * - local / cloud file actions → SAF placeholders
+     * - Python script loading      → asset or document loader
+     * - "clear"                    → reset conversation history
+     * - everything else            → AssistantEngine (Groq + local fallback)
      */
     private fun routeInput(input: String) {
         val lower = input.lowercase(Locale.getDefault())
         appendMessage(ChatMessage.Sender.USER, input)
         when {
+            lower.contains("upload to cloud") || lower.contains("cloud upload") -> {
+                pendingOpenDocumentAction = OpenDocumentAction.CLOUD_UPLOAD
+                openDocumentLauncher.launch(arrayOf("*/*"))
+            }
+            lower.contains("download from cloud") || lower.contains("cloud download") -> {
+                pendingCreateDocumentAction = CreateDocumentAction.CLOUD_DOWNLOAD
+                createDocumentLauncher.launch(cloudStorageManager.createDownloadPlaceholder().fileName)
+            }
+            lower.contains("list cloud") || lower.contains("cloud files") -> {
+                appendMessage(ChatMessage.Sender.SYSTEM, cloudStorageManager.listFilesMessage())
+            }
+            lower.contains("load example script") -> {
+                appendMessage(ChatMessage.Sender.SYSTEM, pythonScriptManager.loadBundledExample())
+            }
+            lower.contains("load python script") || lower.contains("python script") -> {
+                pendingOpenDocumentAction = OpenDocumentAction.PYTHON_SCRIPT
+                openDocumentLauncher.launch(arrayOf("text/x-python", "text/plain", "*/*"))
+            }
+            lower.contains("list scripts") || lower.contains("show scripts") -> {
+                appendMessage(ChatMessage.Sender.SYSTEM, pythonScriptManager.listScriptsMessage())
+            }
             lower.contains("upload") -> {
+                pendingOpenDocumentAction = OpenDocumentAction.LOCAL_UPLOAD
                 openDocumentLauncher.launch(arrayOf("*/*"))
             }
             lower.contains("download") -> {
+                pendingCreateDocumentAction = CreateDocumentAction.LOCAL_DOWNLOAD
                 createDocumentLauncher.launch("assistant_note.txt")
             }
             lower.contains("list files") || lower.contains("show files") -> {
@@ -398,6 +459,17 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener, Recogniti
                 REQUEST_RECORD_AUDIO_PERMISSION
             )
         }
+    }
+
+    private enum class OpenDocumentAction {
+        LOCAL_UPLOAD,
+        CLOUD_UPLOAD,
+        PYTHON_SCRIPT
+    }
+
+    private enum class CreateDocumentAction {
+        LOCAL_DOWNLOAD,
+        CLOUD_DOWNLOAD
     }
 
     override fun onRequestPermissionsResult(

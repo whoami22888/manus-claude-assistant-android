@@ -34,6 +34,7 @@ class AssistantEngine(private val context: Context) {
          */
         fun processInputLocal(input: String): String {
             val lower = input.lowercase(Locale.getDefault()).trim()
+            NativeCommandProcessor.processOrNull(input)?.let { return it }
             return when {
                 lower.contains("hello") || lower.contains("hi") || lower.contains("hey") ->
                     "Hello! How can I assist you today?"
@@ -53,8 +54,26 @@ class AssistantEngine(private val context: Context) {
                 lower.contains("list files") || lower.contains("show files") ->
                     "Say 'list files' to view files in the app's local storage."
 
+                lower.contains("upload to cloud") || lower.contains("cloud upload") ->
+                    "Say 'upload to cloud' to select a file for the cloud storage placeholder."
+
+                lower.contains("download from cloud") || lower.contains("cloud download") ->
+                    "Say 'download from cloud' to save placeholder content from cloud storage."
+
+                lower.contains("list cloud") || lower.contains("cloud files") ->
+                    "Say 'list cloud files' to inspect the placeholder cloud storage inventory."
+
+                lower.contains("load example script") ->
+                    "Say 'load example script' to load the bundled Python extension example."
+
+                lower.contains("load python script") || lower.contains("python script") ->
+                    "Say 'load python script' to import a .py file for future assistant extensions."
+
+                lower.contains("list scripts") || lower.contains("show scripts") ->
+                    "Say 'list scripts' to review the Python scripts currently loaded."
+
                 lower.contains("help") ->
-                    "I can help with:\n• Time and date queries\n• File operations (upload / download / list)\n• General questions — powered by Groq AI when a key is configured.\nJust type or speak your request!"
+                    "I can help with:\n• Time and date queries\n• Local file operations (upload / download / list)\n• Cloud storage placeholders (upload / download / list)\n• Native command checks via JNI (say 'native status')\n• Python script loading (say 'load python script')\n• General questions — powered by Groq AI when a key is configured.\nJust type or speak your request!"
 
                 lower.contains("bye") || lower.contains("goodbye") || lower.contains("exit") ->
                     "Goodbye! Have a great day!"

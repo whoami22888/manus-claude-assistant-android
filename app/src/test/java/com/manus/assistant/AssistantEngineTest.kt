@@ -89,6 +89,31 @@ class AssistantEngineTest {
         assertTrue(response.isNotBlank())
     }
 
+    @Test fun `cloud upload returns descriptive hint`() {
+        val response = respond("upload to cloud")
+        assertTrue(response.contains("cloud", ignoreCase = true))
+    }
+
+    @Test fun `cloud download returns descriptive hint`() {
+        val response = respond("download from cloud")
+        assertTrue(response.contains("cloud", ignoreCase = true))
+    }
+
+    @Test fun `cloud list returns descriptive hint`() {
+        val response = respond("list cloud files")
+        assertTrue(response.contains("cloud", ignoreCase = true))
+    }
+
+    @Test fun `python script loading returns descriptive hint`() {
+        val response = respond("load python script")
+        assertTrue(response.contains("python", ignoreCase = true))
+    }
+
+    @Test fun `native status routes through native processor`() {
+        val response = respond("native status")
+        assertTrue(response.contains("Native core", ignoreCase = true))
+    }
+
     // -----------------------------------------------------------------------
     // Help
     // -----------------------------------------------------------------------
@@ -97,6 +122,9 @@ class AssistantEngineTest {
         val response = respond("help")
         assertTrue(response.contains("Time", ignoreCase = true))
         assertTrue(response.contains("File", ignoreCase = true))
+        assertTrue(response.contains("Cloud", ignoreCase = true))
+        assertTrue(response.contains("Python", ignoreCase = true))
+        assertTrue(response.contains("native", ignoreCase = true))
     }
 
     // -----------------------------------------------------------------------
