@@ -100,7 +100,7 @@ class GroqApiClient(
 
         val request = Request.Builder()
             .url(baseUrl)
-            .addHeader("Authorization", "Bearer " + apiKey)
+            .addHeader("Authorization", listOf("Bearer", apiKey).joinToString(" "))
             .post(bodyJson.toString().toRequestBody(JSON_TYPE))
             .build()
 
