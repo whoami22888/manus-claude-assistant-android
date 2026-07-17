@@ -25,7 +25,7 @@ This Android application is a personal assistant with voice recognition, text-to
 ## Requirements
 
 - Android SDK 24+
-- JDK 17+
+- JDK 17+ (required by Android Gradle Plugin 8.2.0 / Gradle 8.7)
 - Access to Google Maven (`https://dl.google.com/dl/android/maven2/`) or a compatible mirror/proxy hosting Android Gradle Plugin artifacts
 
 ## Dependencies
