@@ -1,19 +1,17 @@
 # Personal Assistant Android Application
 
-This Android application is a personal assistant with voice recognition, cloud storage integration, and a Python scripting system for updates.
+This Android application is a personal assistant with voice recognition, text-to-speech, local file actions, and optional Groq-powered responses.
 
 ## Features
 
 - **Voice Recognition**: Uses Android's built-in speech recognition for voice commands
 - **Text-to-Speech**: Provides spoken responses using Android's TTS engine
-- **Cloud Storage**: Includes placeholders for file upload, download, and listing operations
-- **Native Integration**: Uses JNI to connect with a C++ core library for processing commands
-- **Python Scripting**: Supports loading Python scripts to extend functionality
+- **File Actions**: Supports upload, download, and listing files through Android storage APIs
+- **Groq Integration**: Uses the Groq chat API when an API key is configured, with an offline fallback when it is not
 
 ## Project Structure
 
 - `app/src/main/java`: Kotlin source files
-- `app/src/main/cpp`: Native C++ code (JNI bridge)
 - `app/src/main/res`: Android resources (layouts, strings, etc.)
 - `app/src/main/AndroidManifest.xml`: App manifest with permissions
 
@@ -34,5 +32,6 @@ This Android application is a personal assistant with voice recognition, cloud s
 
 The app uses the following major dependencies:
 - AndroidX libraries
-- Android Speech Recognition and TTS
-- Native C++ integration via JNI
+- Android speech recognition and text-to-speech APIs
+- OkHttp for Groq API requests
+- Kotlin coroutines for background work

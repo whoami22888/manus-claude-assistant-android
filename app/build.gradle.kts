@@ -1,5 +1,7 @@
-apply(plugin = "com.android.application")
-apply(plugin = "org.jetbrains.kotlin.android")
+plugins {
+    id("com.android.application") version "8.2.0"
+    id("org.jetbrains.kotlin.android") version "1.9.0"
+}
 
 // Read local.properties so developers can set groq.api.key there without
 // touching the build file.  CI uses the GROQ_API_KEY environment variable.
