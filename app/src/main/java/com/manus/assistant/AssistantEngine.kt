@@ -22,6 +22,7 @@ import java.util.Locale
 class AssistantEngine(private val context: Context) {
 
     private val groqClient = GroqApiClient()
+    private var turboModeEnabled = false
 
     companion object {
         private const val TAG = "AssistantEngine"
@@ -74,6 +75,16 @@ class AssistantEngine(private val context: Context) {
 
                 lower.contains("help") ->
                     "I can help with:\n• Time and date queries\n• Local file operations (upload / download / list)\n• Cloud storage placeholders (upload / download / list)\n• Native command checks via JNI (say 'native status')\n• Python script loading (say 'load python script')\n• General questions — powered by Groq AI when a key is configured.\nJust type or speak your request!"
+                lower.contains("skills dashboard") ->
+                    "Say 'skills dashboard' to view your configured skills and turbo mode status."
+                lower.startsWith("terminal run") || lower.contains("terminal help") ->
+                    "Use 'terminal run <command>' for sandbox terminal commands, or 'terminal help' for command help."
+                lower == "turbo on" ->
+                    "Turbo mode is now ON. Responses will use local processing for lower latency."
+                lower == "turbo off" ->
+                    "Turbo mode is now OFF. Network AI responses are enabled when API key is set."
+                lower == "turbo status" ->
+                    "Turbo mode status can be viewed with 'skills dashboard'."
 
                 lower.contains("bye") || lower.contains("goodbye") || lower.contains("exit") ->
                     "Goodbye! Have a great day!"
@@ -102,6 +113,12 @@ class AssistantEngine(private val context: Context) {
         groqClient.clearHistory()
     }
 
+    fun setTurboMode(enabled: Boolean) {
+        turboModeEnabled = enabled
+    }
+
+    fun isTurboModeEnabled(): Boolean = turboModeEnabled
+
     /**
      * Process [input] via the Groq AI API with an offline rule-based fallback.
      *
@@ -109,6 +126,7 @@ class AssistantEngine(private val context: Context) {
      * without making a network call.
      */
     suspend fun processInput(input: String): String {
+        if (turboModeEnabled) return processInputLocal(input)
         val apiKey = getApiKey()
         if (apiKey.isNotBlank()) {
             return try {
