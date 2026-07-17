@@ -45,15 +45,6 @@ class AssistantEngine(private val context: Context) {
                 lower.contains("what date") || lower.contains("today") || lower == "date" ->
                     "Today's date is ${SimpleDateFormat("MMMM dd, yyyy", Locale.getDefault()).format(Date())}."
 
-                lower.contains("upload") ->
-                    "Tap the upload button or say 'upload' to pick a file from your device."
-
-                lower.contains("download") ->
-                    "Say 'download' to save a note to your device."
-
-                lower.contains("list files") || lower.contains("show files") ->
-                    "Say 'list files' to view files in the app's local storage."
-
                 lower.contains("upload to cloud") || lower.contains("cloud upload") ->
                     "Say 'upload to cloud' to select a file for the cloud storage placeholder."
 
@@ -62,6 +53,15 @@ class AssistantEngine(private val context: Context) {
 
                 lower.contains("list cloud") || lower.contains("cloud files") ->
                     "Say 'list cloud files' to inspect the placeholder cloud storage inventory."
+
+                lower.contains("upload") ->
+                    "Tap the upload button or say 'upload' to pick a file from your device."
+
+                lower.contains("download") ->
+                    "Say 'download' to save a note to your device."
+
+                lower.contains("list files") || lower.contains("show files") ->
+                    "Say 'list files' to view files in the app's local storage."
 
                 lower.contains("load example script") ->
                     "Say 'load example script' to load the bundled Python extension example."
