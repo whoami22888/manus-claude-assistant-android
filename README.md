@@ -19,7 +19,7 @@ This Android application is a personal assistant with voice recognition, cloud s
 
 ## Building the Project
 
-1. Create `/home/runner/work/manus-claude-assistant-android/manus-claude-assistant-android/local.properties` with `sdk.dir=/path/to/Android/Sdk`
+1. Create `local.properties` in the project root with `sdk.dir=/path/to/Android/Sdk`
 2. Optionally add `groq.api.key=...` to `local.properties`, or export `GROQ_API_KEY`
 3. If Google Maven is not reachable from your network, export `GOOGLE_MAVEN_REPOSITORY_URL` or pass `-PgoogleMavenRepositoryUrl=https://your-mirror.example.com/android/maven2`
 4. Build using Gradle: `./gradlew assembleDebug --no-daemon`
