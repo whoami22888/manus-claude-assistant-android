@@ -128,8 +128,8 @@ class GroqApiClientTest {
     @Test fun `failed request does not add user message to history`() {
         server.enqueue(MockResponse().setResponseCode(500).setBody("Server error"))
         server.enqueue(successResponse("ok"))
-        // The failed call is expected to throw; swallow it intentionally so the test can continue.
-        try { client.chat("Failed message", "test-key") } catch (_: Exception) { /* expected */ }
+        val failedCall = runCatching { client.chat("Failed message", "test-key") }.exceptionOrNull()
+        assertTrue("Expected the failed call to throw", failedCall != null)
         client.chat("Retry", "test-key")
         server.takeRequest() // consume failed request
         val body = server.takeRequest().body.readUtf8()
@@ -145,7 +145,9 @@ class GroqApiClientTest {
                 .setBody("")
         )
         server.enqueue(successResponse("ok"))
-        try { client.chat("Empty response message", "test-key") } catch (_: Exception) { /* expected */ }
+        val emptyResponseFailure =
+            runCatching { client.chat("Empty response message", "test-key") }.exceptionOrNull()
+        assertTrue("Expected the empty response call to throw", emptyResponseFailure != null)
         client.chat("Retry", "test-key")
         server.takeRequest()
         val body = server.takeRequest().body.readUtf8()
