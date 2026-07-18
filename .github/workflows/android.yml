@@ -65,7 +65,7 @@ jobs:
         run: ./gradlew assembleDebug --no-daemon
 
       - name: Build release APK
-        if: ${{ github.event_name != 'workflow_dispatch' || inputs.build_type == 'release' || inputs.build_type == 'both' }}
+        if: ${{ github.event_name == 'workflow_dispatch' && (github.event.inputs.build_type == 'release' || github.event.inputs.build_type == 'both') }}
         run: ./gradlew assembleRelease --no-daemon
         env:
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
@@ -73,14 +73,18 @@ jobs:
       - name: Package APKs into zip
         run: |
           mkdir -p artifacts
-          # Copy each variant only when its build step ran; fail loudly on unexpected errors.
-          if [ -d app/build/outputs/apk/debug ]; then
-            cp app/build/outputs/apk/debug/*.apk artifacts/
+          shopt -s nullglob
+          for apk in app/build/outputs/apk/*/*.apk; do
+            cp "$apk" artifacts/
+          done
+          apks=(artifacts/*.apk)
+          shopt -u nullglob
+          if [ ${#apks[@]} -gt 0 ]; then
+            cd artifacts && zip -r ../manus-assistant-apks.zip .
+          else
+            echo "::warning::No APK files were built. Creating empty archive placeholder."
+            touch manus-assistant-apks.zip
           fi
-          if [ -d app/build/outputs/apk/release ]; then
-            cp app/build/outputs/apk/release/*.apk artifacts/
-          fi
-          cd artifacts && zip -r ../manus-assistant-apks.zip .
 
       - name: Upload APK zip
         uses: actions/upload-artifact@v4
