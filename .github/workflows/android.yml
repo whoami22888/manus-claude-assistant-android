@@ -30,7 +30,7 @@ jobs:
         uses: android-actions/setup-android@v3
 
       - name: Install Android NDK and CMake
-        run: sdkmanager "ndk;26.1.10909125" "cmake;3.22.1"
+        run: sdkmanager "ndk;27.3.13750724" "cmake;3.31.5"
 
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
@@ -38,7 +38,7 @@ jobs:
       - name: Decode release keystore
         # Only runs when the KEYSTORE_FILE secret is configured in the repo.
         # Falls back to debug signing when the secret is absent.
-        if: secrets.KEYSTORE_FILE
+        if: ${{ secrets.KEYSTORE_FILE != '' }}
         run: |
           echo "${{ secrets.KEYSTORE_FILE }}" | base64 --decode > "${{ runner.temp }}/release.jks"
           echo "KEYSTORE_PATH=${{ runner.temp }}/release.jks" >> "$GITHUB_ENV"
@@ -56,6 +56,20 @@ jobs:
         run: ./gradlew assembleRelease --no-daemon
         env:
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+
+      - name: Package APKs into zip
+        run: |
+          mkdir -p artifacts
+          cp app/build/outputs/apk/debug/*.apk artifacts/ 2>/dev/null || true
+          cp app/build/outputs/apk/release/*.apk artifacts/ 2>/dev/null || true
+          cd artifacts && zip -r ../manus-assistant-apks.zip .
+
+      - name: Upload APK zip
+        uses: actions/upload-artifact@v4
+        with:
+          name: manus-assistant-apks
+          path: manus-assistant-apks.zip
+          retention-days: 14
 
       - name: Upload debug APK
         uses: actions/upload-artifact@v4

@@ -15,7 +15,7 @@ val groqApiKey: String =
 android {
     namespace = "com.manus.assistant"
     compileSdk = 34
-    ndkVersion = "26.1.10909125"
+    ndkVersion = "27.3.13750724"
 
     defaultConfig {
         applicationId = "com.manus.assistant"
@@ -81,7 +81,7 @@ android {
     externalNativeBuild {
         cmake {
             path = file("src/main/cpp/CMakeLists.txt")
-            version = "3.22.1"
+            version = "3.31.5"
         }
     }
 }
