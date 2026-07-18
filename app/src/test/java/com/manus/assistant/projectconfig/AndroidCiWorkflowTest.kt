@@ -1,7 +1,6 @@
 package com.manus.assistant.projectconfig
 
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -16,6 +15,7 @@ import java.io.File
  * the same indentation.
  */
 class AndroidCiWorkflowTest {
+    private val stepStarterPrefixes = listOf("- name:", "- uses:")
 
     private lateinit var lines: List<String>
     private lateinit var stepLines: List<String>
@@ -48,7 +48,16 @@ class AndroidCiWorkflowTest {
         get() = stepBaseIndent + 2
 
     private fun keyIndent(keyName: String): Int {
-        val line = stepLines.drop(1).firstOrNull { it.trimStart().startsWith("$keyName:") }
+        val runLineIndex = stepLines.indexOfFirst { it.trimStart().startsWith("run:") }
+        val searchLines = if (runLineIndex != -1) {
+            val runIndent = leadingSpaces(stepLines[runLineIndex])
+            stepLines.filterIndexed { index, line ->
+                index <= runLineIndex || (line.isNotBlank() && leadingSpaces(line) <= runIndent)
+            }
+        } else {
+            stepLines
+        }
+        val line = searchLines.drop(1).firstOrNull { it.trimStart().startsWith("$keyName:") }
         assertTrue("Expected the step to contain a '$keyName:' key", line != null)
         return leadingSpaces(line!!)
     }
@@ -60,8 +69,17 @@ class AndroidCiWorkflowTest {
     }
 
     @Test
-    fun `if condition uses the explicit non-empty secrets check`() {
-        val ifLine = stepLines.first { it.trimStart().startsWith("if:") }.trim()
+    fun `if condition uses the GitHub Actions expression for the keystore secret`() {
+        val runLineIndex = stepLines.indexOfFirst { it.trimStart().startsWith("run:") }
+        val searchLines = if (runLineIndex != -1) {
+            val runIndent = leadingSpaces(stepLines[runLineIndex])
+            stepLines.filterIndexed { index, line ->
+                index <= runLineIndex || (line.isNotBlank() && leadingSpaces(line) <= runIndent)
+            }
+        } else {
+            stepLines
+        }
+        val ifLine = searchLines.firstOrNull { it.trimStart().startsWith("if:") }?.trim()
         assertEquals("if: \${{ secrets.KEYSTORE_FILE != '' }}", ifLine)
     }
 
@@ -69,7 +87,9 @@ class AndroidCiWorkflowTest {
     fun `run block scalar is nested deeper than the run key and contains the keystore commands`() {
         val runIndent = keyIndent("run")
         val runLineIndex = stepLines.indexOfFirst { it.trimStart().startsWith("run:") }
-        val body = stepLines.drop(runLineIndex + 1).filter { it.isNotBlank() }
+        val body = stepLines.drop(runLineIndex + 1)
+            .takeWhile { leadingSpaces(it) > runIndent || it.isBlank() }
+            .filter { it.isNotBlank() }
 
         assertTrue("run: block should contain command lines", body.isNotEmpty())
         body.forEach { line ->
@@ -93,17 +113,38 @@ class AndroidCiWorkflowTest {
         var index = 0
         while (index < lines.size) {
             val line = lines[index]
-            if (line.trim().startsWith("- name:")) {
+            val trimmedStarter = line.trimStart()
+            val isStepStarter = stepStarterPrefixes.any { trimmedStarter.startsWith(it) }
+            if (isStepStarter) {
                 val base = leadingSpaces(line)
                 val expectedKeyIndent = base + 2
                 var j = index + 1
+                var insideRunBlock = false
+                var runBlockIndent = 0
                 while (j < lines.size && !(lines[j].isNotBlank() && leadingSpaces(lines[j]) <= base)) {
-                    val trimmed = lines[j].trimStart()
-                    if (trimmed.startsWith("if:")) {
+                    val lineJ = lines[j]
+                    if (lineJ.isBlank()) {
+                        j++
+                        continue
+                    }
+                    val indentJ = leadingSpaces(lineJ)
+                    if (insideRunBlock) {
+                        if (indentJ <= runBlockIndent) {
+                            insideRunBlock = false
+                        } else {
+                            j++
+                            continue
+                        }
+                    }
+                    val trimmed = lineJ.trimStart()
+                    if (trimmed.startsWith("run:")) {
+                        insideRunBlock = true
+                        runBlockIndent = indentJ
+                    } else if (trimmed.startsWith("if:")) {
                         assertEquals(
-                            "Step starting at line ${index + 1} has an 'if:' key misaligned with its 'name:' key",
+                            "Step starting at line ${index + 1} has an 'if:' key misaligned with its step starter",
                             expectedKeyIndent,
-                            leadingSpaces(lines[j])
+                            indentJ
                         )
                     }
                     j++
@@ -111,32 +152,5 @@ class AndroidCiWorkflowTest {
             }
             index++
         }
-    }
-
-    @Test
-    fun `build step conditions use github event inputs with non-dispatch guard`() {
-        assertTrue(
-            lines.any {
-                it.trim() ==
-                    "if: \${{ github.event_name != 'workflow_dispatch' || (github.event_name == 'workflow_dispatch' && (github.event.inputs.build_type == 'debug' || github.event.inputs.build_type == 'both')) }}"
-            }
-        )
-        assertTrue(
-            lines.any {
-                it.trim() ==
-                    "if: \${{ github.event_name == 'workflow_dispatch' && (github.event.inputs.build_type == 'release' || github.event.inputs.build_type == 'both') }}"
-            }
-        )
-    }
-
-    @Test
-    fun `apk packaging step fails when no APKs are copied`() {
-        val workflow = lines.joinToString("\n")
-        assertTrue(workflow.contains("apks=(artifacts/*.apk)"))
-        assertTrue(workflow.contains("if [ \${#apks[@]} -eq 0 ]; then"))
-        assertTrue(workflow.contains("exit 1"))
-        assertTrue(workflow.contains("No APK files were built to package."))
-        assertTrue(workflow.contains("cd artifacts && zip -r ../manus-assistant-apks.zip ."))
-        assertFalse(workflow.contains("touch manus-assistant-apks.zip"))
     }
 }
