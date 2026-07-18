@@ -136,6 +136,7 @@ class AndroidCiWorkflowTest {
         assertTrue(workflow.contains("if [ \${#apks[@]} -eq 0 ]; then"))
         assertTrue(workflow.contains("exit 1"))
         assertTrue(workflow.contains("No APK files were built to package."))
+        assertTrue(workflow.contains("cd artifacts && zip -r ../manus-assistant-apks.zip ."))
         assertFalse(workflow.contains("touch manus-assistant-apks.zip"))
     }
 }
