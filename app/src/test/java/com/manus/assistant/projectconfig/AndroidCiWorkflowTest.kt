@@ -68,7 +68,9 @@ fun `if condition uses the GitHub Actions expression for the keystore secret`() 
     fun `run block scalar is nested deeper than the run key and contains the keystore commands`() {
         val runIndent = keyIndent("run")
         val runLineIndex = stepLines.indexOfFirst { it.trimStart().startsWith("run:") }
-        val body = stepLines.drop(runLineIndex + 1).filter { it.isNotBlank() }
+        val body = stepLines.drop(runLineIndex + 1)
+            .takeWhile { leadingSpaces(it) > runIndent || it.isBlank() }
+            .filter { it.isNotBlank() }
 
         assertTrue("run: block should contain command lines", body.isNotEmpty())
         body.forEach { line ->
