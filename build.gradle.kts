@@ -1,23 +1,6 @@
-buildscript {
-    repositories {
-        val googleMavenRepositoryUrl =
-            providers.gradleProperty("googleMavenRepositoryUrl").orNull
-                ?: System.getenv("GOOGLE_MAVEN_REPOSITORY_URL")
-        if (googleMavenRepositoryUrl.isNullOrBlank()) {
-            google()
-        } else {
-            require(googleMavenRepositoryUrl.startsWith("https://")) {
-                "googleMavenRepositoryUrl must use HTTPS, got: $googleMavenRepositoryUrl"
-            }
-            maven {
-                url = uri(googleMavenRepositoryUrl)
-                name = "google"
-            }
-        }
-        mavenCentral()
-    }
-    dependencies {
-        classpath("com.android.tools.build:gradle:8.2.0")
-        classpath("org.jetbrains.kotlin:kotlin-gradle-plugin:1.9.0")
-    }
+// Plugin versions are declared here and resolved through the pluginManagement
+// block in settings.gradle.kts (which also handles the Google Maven URL override).
+plugins {
+    id("com.android.application") version "8.2.0" apply false
+    id("org.jetbrains.kotlin.android") version "1.9.0" apply false
 }

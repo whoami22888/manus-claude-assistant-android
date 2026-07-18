@@ -1,45 +1,94 @@
-# Personal Assistant Android Application
+# Manus Claude Assistant — Android
 
-This Android application is a personal assistant with voice recognition, text-to-speech, local and cloud storage placeholders, JNI-backed native command processing, Python script loading, and optional Groq-powered responses.
+An Android personal-assistant app with voice input/output, Groq AI integration, a JNI-backed native command layer, skills management, a sandboxed terminal, and local/cloud storage helpers.
 
 ## Features
 
-- **Voice Recognition**: Uses Android's built-in speech recognition for voice commands
-- **Text-to-Speech**: Provides spoken responses using Android's TTS engine
-- **File Actions**: Supports upload, download, and listing files through Android storage APIs
-- **Cloud Storage Placeholders**: Includes placeholder flows for cloud upload, download, and file listing
-- **Native Integration**: Uses JNI to connect to a small C++ core library for command handling
-- **Python Script Loading**: Loads bundled or user-selected `.py` files for future assistant extensions
-- **Groq Integration**: Uses the Groq chat API when an API key is configured, with an offline fallback when it is not
-- **Skills Dashboard & Updater**: Supports listing, adding, updating, and removing skills in-app
-- **Sandbox Terminal Commands**: Supports safe terminal-like commands (`pwd`, `ls`, `cat`, `date`, `echo`, `build-tools`)
-- **Turbo Mode**: Supports `turbo on/off/status` to force fast local-response mode
+- **Voice Recognition** — uses Android's built-in speech recognizer for hands-free input
+- **Text-to-Speech** — spoken responses via Android's TTS engine
+- **Groq AI** — chat via the Groq API (`llama-3.3-70b-versatile`) with a rolling conversation history; falls back to offline rule-based responses when a key is not configured or the network is unavailable
+- **Turbo Mode** — `turbo on/off/status` forces all responses through the local rule engine for zero-latency replies
+- **Skills Dashboard** — list, add, update, and remove named skills; view turbo-mode status
+- **Sandbox Terminal** — safe in-app terminal commands: `pwd`, `ls`, `cat`, `date`, `echo`, `build-tools`
+- **Native JNI Layer** — a small C++ core (`assistantcore` shared library) handles `native status`, `native help`, and `native process` commands; a pure-Kotlin fallback is used automatically when the library is not available
+- **Local File Actions** — upload and download files through Android's Storage Access Framework (no storage permissions required)
+- **Cloud Storage Placeholders** — prototype upload/download/list flows ready to be wired to a real cloud back-end
+- **Python Script Loading** — load bundled or user-selected `.py` files for future assistant extensions
 
 ## Project Structure
 
-- `app/src/main/java`: Kotlin source files
-- `app/src/main/res`: Android resources (layouts, strings, etc.)
-- `app/src/main/AndroidManifest.xml`: App manifest with permissions
+```
+app/src/main/
+├── java/com/manus/assistant/   # Kotlin source files
+│   ├── MainActivity.kt          # UI and input routing
+│   ├── AssistantEngine.kt       # Groq AI + local-rule orchestrator
+│   ├── GroqApiClient.kt         # Groq chat-completions HTTP client
+│   ├── SkillsManager.kt         # Persistent skills registry
+│   ├── TerminalManager.kt       # Sandboxed terminal command runner
+│   ├── NativeCommandProcessor.kt# JNI bridge (Kotlin side)
+│   ├── PythonScriptManager.kt   # Python script loader
+│   ├── CloudStorageManager.kt   # Cloud storage placeholder manager
+│   ├── ChatAdapter.kt           # RecyclerView adapter for chat messages
+│   └── ChatMessage.kt           # Chat message data model
+├── cpp/
+│   ├── CMakeLists.txt           # CMake build for the native library
+│   └── native_command_processor.cpp
+├── res/                         # Layouts, strings, drawables
+└── AndroidManifest.xml          # Permissions: RECORD_AUDIO, INTERNET
+```
 
-## Building the Project
+## Building
 
-1. Create `local.properties` in the project root with `sdk.dir=/path/to/Android/Sdk`
-2. Optionally add `groq.api.key=...` to `local.properties`, or export `GROQ_API_KEY`
-3. If Google Maven is not reachable from your network, export `GOOGLE_MAVEN_REPOSITORY_URL` or pass `-PgoogleMavenRepositoryUrl=https://your-mirror.example.com/android/maven2`
-4. Install Android NDK 26.1.10909125 and CMake 3.22.1 if they are not already present
-5. Build using Gradle: `./gradlew assembleDebug --no-daemon`
+### Prerequisites
 
-## Requirements
+| Tool | Version |
+|------|---------|
+| JDK | 17+ |
+| Android SDK | API 24 – 34 |
+| Android NDK | 26.1.10909125 |
+| CMake | 3.22.1 |
 
-- Android SDK 24+
-- Android NDK 26.1.10909125 with CMake 3.22.1 for the JNI layer
-- JDK 17+ (required by Android Gradle Plugin 8.2.0 / Gradle 8.7)
-- Access to Google Maven (`https://dl.google.com/dl/android/maven2/`) or a compatible mirror/proxy hosting Android Gradle Plugin artifacts
+### Steps
+
+1. Clone the repository.
+2. Create `local.properties` in the project root and set `sdk.dir=/path/to/Android/Sdk`.
+3. *(Optional)* Add `groq.api.key=<your-key>` to `local.properties`, or export `GROQ_API_KEY` in your shell. The app works without a key using its offline rule engine.
+4. Install NDK and CMake if not already present:
+   ```
+   sdkmanager "ndk;26.1.10909125" "cmake;3.22.1"
+   ```
+5. Build:
+   ```
+   ./gradlew assembleDebug --no-daemon
+   ```
+
+### Google Maven mirror (optional)
+
+If `dl.google.com` is not reachable from your network, export `GOOGLE_MAVEN_REPOSITORY_URL` or pass `-PgoogleMavenRepositoryUrl=https://your-mirror.example.com/android/maven2`. The setting is respected in both `pluginManagement` (plugin artifacts) and `dependencyResolutionManagement` (library artifacts).
+
+### Release signing (optional)
+
+Set `KEYSTORE_PATH`, `KEYSTORE_PASSWORD`, `KEY_ALIAS`, and `KEY_PASSWORD` environment variables. When absent the build falls back to the debug key automatically.
+
+## CI
+
+GitHub Actions (`android.yml`) runs on every push/PR to `main`:
+
+1. Sets up JDK 17 and Android SDK
+2. Installs NDK 26.1.10909125 and CMake 3.22.1
+3. Runs unit tests (`./gradlew test`)
+4. Builds both debug and release APKs
+5. Uploads APKs as workflow artifacts (retained 14 days)
 
 ## Dependencies
 
-The app uses the following major dependencies:
-- AndroidX libraries
-- Android speech recognition and text-to-speech APIs
-- OkHttp for Groq API requests
-- Kotlin coroutines for background work
+| Library | Purpose |
+|---------|---------|
+| AndroidX (core-ktx, appcompat, recyclerview) | UI and Jetpack utilities |
+| Material Components | UI theming |
+| OkHttp 4.12 | Groq API HTTP calls |
+| Kotlin Coroutines 1.7 | Off-main-thread networking |
+| Lifecycle Runtime KTX 2.7 | `lifecycleScope` coroutine support |
+| JUnit 4 / OkHttp MockWebServer | Unit testing |
+| Espresso | Instrumentation testing |
+
