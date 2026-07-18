@@ -1,0 +1,143 @@
+package com.manus.assistant
+
+import android.content.Context
+import android.util.Log
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
+
+/**
+ * Assistant engine that tries the Groq AI API first and falls back to an
+ * offline rule-based implementation when the API is unavailable or the key
+ * is not configured.
+ *
+ * The API key is resolved at call time: SharedPreferences ("groq_api_key") takes
+ * precedence, then [BuildConfig.GROQ_API_KEY] (baked in at build time).
+ *
+ * [processInput] is a suspend function and must be called from a coroutine
+ * (e.g. inside [androidx.lifecycle.lifecycleScope]).
+ */
+class AssistantEngine(private val context: Context) {
+
+    private val groqClient = GroqApiClient()
+    private var turboModeEnabled = false
+
+    companion object {
+        private const val TAG = "AssistantEngine"
+        private const val PREFS_NAME = "app_prefs"
+        private const val PREF_API_KEY = "groq_api_key"
+
+        /**
+         * Offline rule-based responder — always available, no network required.
+         * Kept in the companion object so it can be tested without a [Context].
+         */
+        fun processInputLocal(input: String): String {
+            val lower = input.lowercase(Locale.getDefault()).trim()
+            NativeCommandProcessor.processOrNull(input)?.let { return it }
+            return when {
+                lower.contains("hello") || lower.contains("hi") || lower.contains("hey") ->
+                    "Hello! How can I assist you today?"
+
+                lower.contains("what time") || lower == "time" ->
+                    "The current time is ${SimpleDateFormat("hh:mm a", Locale.getDefault()).format(Date())}."
+
+                lower.contains("what date") || lower.contains("today") || lower == "date" ->
+                    "Today's date is ${SimpleDateFormat("MMMM dd, yyyy", Locale.getDefault()).format(Date())}."
+
+                lower.contains("upload to cloud") || lower.contains("cloud upload") ->
+                    "Say 'upload to cloud' to select a file for the cloud storage placeholder."
+
+                lower.contains("download from cloud") || lower.contains("cloud download") ->
+                    "Say 'download from cloud' to save placeholder content from cloud storage."
+
+                lower.contains("list cloud") || lower.contains("cloud files") ->
+                    "Say 'list cloud files' to inspect the placeholder cloud storage inventory."
+
+                lower.contains("upload") ->
+                    "Tap the upload button or say 'upload' to pick a file from your device."
+
+                lower.contains("download") ->
+                    "Say 'download' to save a note to your device."
+
+                lower.contains("list files") || lower.contains("show files") ->
+                    "Say 'list files' to view files in the app's local storage."
+
+                lower.contains("load example script") ->
+                    "Say 'load example script' to load the bundled Python extension example."
+
+                lower.contains("load python script") || lower.contains("python script") ->
+                    "Say 'load python script' to import a .py file for future assistant extensions."
+
+                lower.contains("list scripts") || lower.contains("show scripts") ->
+                    "Say 'list scripts' to review the Python scripts currently loaded."
+
+                lower.contains("help") ->
+                    "I can help with:\n• Time and date queries\n• Local file operations (upload / download / list)\n• Cloud storage placeholders (upload / download / list)\n• Native command checks via JNI (say 'native status')\n• Python script loading (say 'load python script')\n• General questions — powered by Groq AI when a key is configured.\nJust type or speak your request!"
+                lower.contains("skills dashboard") ->
+                    "Say 'skills dashboard' to view your configured skills and turbo mode status."
+                lower.startsWith("terminal run") || lower.contains("terminal help") ->
+                    "Use 'terminal run <command>' for sandbox terminal commands, or 'terminal help' for command help."
+                lower == "turbo on" ->
+                    "Turbo mode is now ON. Responses will use local processing for lower latency."
+                lower == "turbo off" ->
+                    "Turbo mode is now OFF. Network AI responses are enabled when API key is set."
+                lower == "turbo status" ->
+                    "Turbo mode status can be viewed with 'skills dashboard'."
+
+                lower.contains("bye") || lower.contains("goodbye") || lower.contains("exit") ->
+                    "Goodbye! Have a great day!"
+
+                lower.contains("thank") ->
+                    "You're welcome! Let me know if there's anything else I can do."
+
+                else ->
+                    "I received: \"$input\".\nI'm still learning. Type \"help\" to see what I can do."
+            }
+        }
+    }
+
+    /** Returns the runtime API key from SharedPreferences, falling back to the build-time value. */
+    private fun getApiKey(): String {
+        val saved = context
+            .getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+            .getString(PREF_API_KEY, null)
+        return if (!saved.isNullOrBlank()) saved else BuildConfig.GROQ_API_KEY
+    }
+
+    /**
+     * Clears the Groq conversation history (useful when starting a fresh session).
+     */
+    fun clearHistory() {
+        groqClient.clearHistory()
+    }
+
+    fun setTurboMode(enabled: Boolean) {
+        turboModeEnabled = enabled
+    }
+
+    fun isTurboModeEnabled(): Boolean = turboModeEnabled
+
+    /**
+     * Process [input] via the Groq AI API with an offline rule-based fallback.
+     *
+     * When the resolved API key is blank the local rules are used immediately
+     * without making a network call.
+     */
+    suspend fun processInput(input: String): String {
+        if (turboModeEnabled) return processInputLocal(input)
+        val apiKey = getApiKey()
+        if (apiKey.isNotBlank()) {
+            return try {
+                withContext(Dispatchers.IO) {
+                    groqClient.chat(input, apiKey)
+                }
+            } catch (e: Exception) {
+                Log.w(TAG, "Groq API call failed, using local rules: ${e.message}")
+                processInputLocal(input)
+            }
+        }
+        return processInputLocal(input)
+    }
+}

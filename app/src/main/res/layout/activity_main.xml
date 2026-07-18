@@ -4,33 +4,46 @@
     android:layout_height="match_parent"
     android:orientation="vertical">
 
-    <TextView
-        android:id="@+id/tvHeader"
+    <!-- Header row: title + settings button -->
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="?attr/colorPrimary"
-        android:padding="16dp"
-        android:text="@string/app_name"
-        android:textColor="?attr/colorOnPrimary"
-        android:textSize="20sp"
-        android:textStyle="bold" />
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:padding="8dp">
 
-    <ScrollView
-        android:id="@+id/scrollView"
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:paddingStart="8dp"
+            android:paddingEnd="8dp"
+            android:text="@string/app_name"
+            android:textColor="?attr/colorOnPrimary"
+            android:textSize="20sp"
+            android:textStyle="bold" />
+
+        <ImageButton
+            android:id="@+id/btnSettings"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="@string/settings"
+            android:src="@android:drawable/ic_menu_preferences"
+            android:tint="?attr/colorOnPrimary" />
+    </LinearLayout>
+
+    <!-- Chat messages list -->
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recyclerViewChat"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:fillViewport="true">
+        android:clipToPadding="false"
+        android:padding="8dp" />
 
-        <TextView
-            android:id="@+id/tvChat"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:lineSpacingExtra="4dp"
-            android:padding="16dp"
-            android:textSize="16sp" />
-    </ScrollView>
-
+    <!-- Status bar -->
     <TextView
         android:id="@+id/tvStatus"
         android:layout_width="match_parent"
@@ -41,6 +54,7 @@
         android:textColor="@android:color/white"
         android:textSize="13sp" />
 
+    <!-- Input row -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
