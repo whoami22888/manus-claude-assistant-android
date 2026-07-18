@@ -1,14 +1,18 @@
-val googleMavenRepositoryUrl = providers.gradleProperty("googleMavenRepositoryUrl")
-    .orElse(providers.environmentVariable("GOOGLE_MAVEN_REPOSITORY_URL"))
-    .orNull
-    ?.trim()
-    ?.takeIf { it.isNotEmpty() }
-
 pluginManagement {
     repositories {
+        val googleMavenRepositoryUrl = settings.providers.gradleProperty("googleMavenRepositoryUrl")
+            .orElse(settings.providers.environmentVariable("GOOGLE_MAVEN_REPOSITORY_URL"))
+            .orNull
+            ?.trim()
+            ?.takeIf { it.isNotEmpty() }
+
         // Allow CI/developers to override the Google Maven endpoint when
         // official Google infrastructure is unreachable from their network.
-        googleMavenRepositoryUrl?.let { maven(url = uri(it)) } ?: google()
+        if (googleMavenRepositoryUrl != null) {
+            maven(url = uri(googleMavenRepositoryUrl))
+        } else {
+            google()
+        }
 
         // Mirror fallbacks for constrained environments.
         maven { url = uri("https://maven.aliyun.com/repository/google") }
@@ -21,7 +25,17 @@ pluginManagement {
 dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
     repositories {
-        googleMavenRepositoryUrl?.let { maven(url = uri(it)) } ?: google()
+        val googleMavenRepositoryUrl = settings.providers.gradleProperty("googleMavenRepositoryUrl")
+            .orElse(settings.providers.environmentVariable("GOOGLE_MAVEN_REPOSITORY_URL"))
+            .orNull
+            ?.trim()
+            ?.takeIf { it.isNotEmpty() }
+
+        if (googleMavenRepositoryUrl != null) {
+            maven(url = uri(googleMavenRepositoryUrl))
+        } else {
+            google()
+        }
         mavenCentral()
 
         // Mirror proxies as fallback for constrained environments
