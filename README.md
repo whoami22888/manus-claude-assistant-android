@@ -45,8 +45,8 @@ app/src/main/
 |------|---------|
 | JDK | 17+ |
 | Android SDK | API 24 – 34 |
-| Android NDK | 26.1.10909125 |
-| CMake | 3.22.1 |
+| Android NDK | 27.3.13750724 |
+| CMake | 3.31.5 |
 
 ### Steps
 
@@ -55,7 +55,7 @@ app/src/main/
 3. *(Optional)* Add `groq.api.key=<your-key>` to `local.properties`, or export `GROQ_API_KEY` in your shell. The app works without a key using its offline rule engine.
 4. Install NDK and CMake if not already present:
    ```
-   sdkmanager "ndk;26.1.10909125" "cmake;3.22.1"
+   sdkmanager "ndk;27.3.13750724" "cmake;3.31.5"
    ```
 5. Build:
    ```
@@ -75,7 +75,7 @@ Set `KEYSTORE_PATH`, `KEYSTORE_PASSWORD`, `KEY_ALIAS`, and `KEY_PASSWORD` enviro
 GitHub Actions (`android.yml`) runs on every push/PR to `main`:
 
 1. Sets up JDK 17 and Android SDK
-2. Installs NDK 26.1.10909125 and CMake 3.22.1
+2. Installs NDK 27.3.13750724 and CMake 3.31.5
 3. Runs unit tests (`./gradlew test`)
 4. Builds both debug and release APKs
 5. Uploads APKs as workflow artifacts (retained 14 days)
@@ -91,4 +91,3 @@ GitHub Actions (`android.yml`) runs on every push/PR to `main`:
 | Lifecycle Runtime KTX 2.7 | `lifecycleScope` coroutine support |
 | JUnit 4 / OkHttp MockWebServer | Unit testing |
 | Espresso | Instrumentation testing |
-

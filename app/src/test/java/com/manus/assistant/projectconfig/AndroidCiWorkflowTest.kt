@@ -60,9 +60,9 @@ class AndroidCiWorkflowTest {
     }
 
     @Test
-    fun `if condition uses the bare secrets expression without curly braces`() {
+    fun `if condition uses the explicit non-empty secrets check`() {
         val ifLine = stepLines.first { it.trimStart().startsWith("if:") }.trim()
-        assertEquals("if: secrets.KEYSTORE_FILE", ifLine)
+        assertEquals("if: \${{ secrets.KEYSTORE_FILE != '' }}", ifLine)
     }
 
     @Test
