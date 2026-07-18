@@ -15,6 +15,7 @@ import java.io.File
  * the same indentation.
  */
 class AndroidCiWorkflowTest {
+    private val stepStarterPrefixes = listOf("- name:", "- uses:", "- run:")
 
     private lateinit var lines: List<String>
     private lateinit var stepLines: List<String>
@@ -113,9 +114,7 @@ class AndroidCiWorkflowTest {
         while (index < lines.size) {
             val line = lines[index]
             val trimmedStarter = line.trimStart()
-            val isStepStarter = trimmedStarter.startsWith("- name:") ||
-                trimmedStarter.startsWith("- uses:") ||
-                trimmedStarter.startsWith("- run:")
+            val isStepStarter = stepStarterPrefixes.any { trimmedStarter.startsWith(it) }
             if (isStepStarter) {
                 val base = leadingSpaces(line)
                 val expectedKeyIndent = base + 2

@@ -82,7 +82,7 @@ jobs:
           if [ ${#apks[@]} -gt 0 ]; then
             cd artifacts && zip -r ../manus-assistant-apks.zip .
           else
-            echo "::error::No APK files were built to package. Verify build steps completed and APK outputs exist under app/build/outputs/apk."
+            echo "::error::No APK files were copied into artifacts/ to package. Verify build steps completed and APK outputs were copied from app/build/outputs/apk."
             exit 1
           fi
 
