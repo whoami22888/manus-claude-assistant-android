@@ -1,39 +1,51 @@
-// Top-level settings script lookup for optional Google Maven mirror override.
-val googleMavenRepositoryUrl = providers.gradleProperty("googleMavenRepositoryUrl").orNull
-    ?.trim()
-    ?.takeIf { it.isNotEmpty() }
-    ?: System.getenv("GOOGLE_MAVEN_REPOSITORY_URL")
-        ?.trim()
-        ?.takeIf { it.isNotEmpty() }
-
-fun org.gradle.api.artifacts.dsl.RepositoryHandler.addGoogleRepository() {
-    if (googleMavenRepositoryUrl == null) {
-        google()
-    } else {
-        require(googleMavenRepositoryUrl.startsWith("https://")) {
-            "googleMavenRepositoryUrl must use HTTPS, got: $googleMavenRepositoryUrl"
-        }
-        maven {
-            url = uri(googleMavenRepositoryUrl)
-            name = "google"
-        }
-    }
-}
-
 pluginManagement {
     repositories {
-        addGoogleRepository()
-        mavenCentral()
+        // Keep this lookup inline: pluginManagement is compiled in an earlier
+        // settings phase and cannot see helper declarations reliably.
+        val googleMavenRepositoryUrl = settings.providers.gradleProperty("googleMavenRepositoryUrl")
+            .orElse(settings.providers.environmentVariable("GOOGLE_MAVEN_REPOSITORY_URL"))
+            .orNull
+            ?.trim()
+            ?.takeIf { it.isNotEmpty() }
+
+        // Allow CI/developers to override the Google Maven endpoint when
+        // official Google infrastructure is unreachable from their network.
+        if (googleMavenRepositoryUrl != null) {
+            maven(url = uri(googleMavenRepositoryUrl))
+        } else {
+            google()
+        }
+
+        // Mirror fallbacks for constrained environments.
+        maven { url = uri("https://maven.aliyun.com/repository/google") }
+        maven { url = uri("https://maven.aliyun.com/repository/public") }
         gradlePluginPortal()
+        mavenCentral()
     }
 }
+
 dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
     repositories {
-        addGoogleRepository()
+        val googleMavenRepositoryUrl = settings.providers.gradleProperty("googleMavenRepositoryUrl")
+            .orElse(settings.providers.environmentVariable("GOOGLE_MAVEN_REPOSITORY_URL"))
+            .orNull
+            ?.trim()
+            ?.takeIf { it.isNotEmpty() }
+
+        if (googleMavenRepositoryUrl != null) {
+            maven(url = uri(googleMavenRepositoryUrl))
+        } else {
+            google()
+        }
         mavenCentral()
+
+        // Mirror proxies as fallback for constrained environments
+        maven { url = uri("https://maven.aliyun.com/repository/google") }
+        maven { url = uri("https://maven.aliyun.com/repository/public") }
     }
 }
 
-rootProject.name = "PersonalAssistant"
+// FIX: Aligned with your actual package structure and repository name
+rootProject.name = "manus-claude-assistant-android"
 include(":app")
