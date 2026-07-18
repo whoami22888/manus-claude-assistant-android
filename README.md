@@ -62,9 +62,12 @@ app/src/main/
    ./gradlew assembleDebug --no-daemon
    ```
 
-### Google Maven mirror (optional)
+### Google Maven mirror
 
-If `dl.google.com` is not reachable from your network, export `GOOGLE_MAVEN_REPOSITORY_URL` or pass `-PgoogleMavenRepositoryUrl=https://your-mirror.example.com/android/maven2`. The setting is respected in both `pluginManagement` (plugin artifacts) and `dependencyResolutionManagement` (library artifacts).
+`settings.gradle.kts` is configured to use Alibaba Cloud's public mirrors for Google and common artifacts:
+
+- `https://maven.aliyun.com/repository/google`
+- `https://maven.aliyun.com/repository/public`
 
 ### Release signing (optional)
 
@@ -91,4 +94,3 @@ GitHub Actions (`android.yml`) runs on every push/PR to `main`:
 | Lifecycle Runtime KTX 2.7 | `lifecycleScope` coroutine support |
 | JUnit 4 / OkHttp MockWebServer | Unit testing |
 | Espresso | Instrumentation testing |
-
