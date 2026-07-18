@@ -118,7 +118,7 @@ class AndroidCiWorkflowTest {
         assertTrue(
             lines.any {
                 it.trim() ==
-                    "if: \${{ github.event_name != 'workflow_dispatch' || github.event.inputs.build_type == 'debug' || github.event.inputs.build_type == 'both' }}"
+                    "if: \${{ github.event_name != 'workflow_dispatch' || (github.event_name == 'workflow_dispatch' && (github.event.inputs.build_type == 'debug' || github.event.inputs.build_type == 'both')) }}"
             }
         )
         assertTrue(

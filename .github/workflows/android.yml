@@ -61,7 +61,7 @@ jobs:
         run: ./gradlew test --no-daemon
 
       - name: Build debug APK
-        if: ${{ github.event_name != 'workflow_dispatch' || github.event.inputs.build_type == 'debug' || github.event.inputs.build_type == 'both' }}
+        if: ${{ github.event_name != 'workflow_dispatch' || (github.event_name == 'workflow_dispatch' && (github.event.inputs.build_type == 'debug' || github.event.inputs.build_type == 'both')) }}
         run: ./gradlew assembleDebug --no-daemon
 
       - name: Build release APK
