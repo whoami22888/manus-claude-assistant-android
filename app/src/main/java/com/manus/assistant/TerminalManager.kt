@@ -64,6 +64,6 @@ class TerminalManager(private val rootDir: File) {
         private const val MAX_LIST_ENTRIES = 100
         private const val MAX_FILE_CHARS = 4000
         private const val BUILD_TOOLS_INFO =
-            "Build tools: AGP 8.2.0, Kotlin 1.9.0, Gradle 8.7, NDK 27.3.13750724, CMake 3.31.5, minSdk 24, targetSdk 34"
+            "Build tools: AGP 8.2.0, Kotlin 1.9.0, Gradle 8.7, minSdk 24, targetSdk 34"
     }
 }
