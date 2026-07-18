@@ -58,11 +58,11 @@ class AndroidCiWorkflowTest {
         assertEquals("'run:' should be indented like the step's 'name:' key", stepKeyIndent, keyIndent("run"))
     }
 
-    @Test
-    fun `if condition uses the bare secrets expression without curly braces`() {
-        val ifLine = stepLines.first { it.trimStart().startsWith("if:") }.trim()
-        assertEquals("if: secrets.KEYSTORE_FILE", ifLine)
-    }
+@Test
+fun `if condition uses the GitHub Actions expression for the keystore secret`() {
+    val ifLine = stepLines.first { it.trimStart().startsWith("if:") }.trim()
+    assertEquals("if: \\${{ secrets.KEYSTORE_FILE != '' }}", ifLine)
+}
 
     @Test
     fun `run block scalar is nested deeper than the run key and contains the keystore commands`() {
