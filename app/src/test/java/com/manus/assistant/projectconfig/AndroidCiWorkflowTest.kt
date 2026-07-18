@@ -1,6 +1,7 @@
-package com.example.personalassistant.projectconfig
+package com.manus.assistant.projectconfig
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
@@ -110,5 +111,32 @@ class AndroidCiWorkflowTest {
             }
             index++
         }
+    }
+
+    @Test
+    fun `build step conditions use github event inputs with non-dispatch guard`() {
+        assertTrue(
+            lines.any {
+                it.trim() ==
+                    "if: \${{ github.event_name != 'workflow_dispatch' || (github.event_name == 'workflow_dispatch' && (github.event.inputs.build_type == 'debug' || github.event.inputs.build_type == 'both')) }}"
+            }
+        )
+        assertTrue(
+            lines.any {
+                it.trim() ==
+                    "if: \${{ github.event_name == 'workflow_dispatch' && (github.event.inputs.build_type == 'release' || github.event.inputs.build_type == 'both') }}"
+            }
+        )
+    }
+
+    @Test
+    fun `apk packaging step fails when no APKs are copied`() {
+        val workflow = lines.joinToString("\n")
+        assertTrue(workflow.contains("apks=(artifacts/*.apk)"))
+        assertTrue(workflow.contains("if [ \${#apks[@]} -eq 0 ]; then"))
+        assertTrue(workflow.contains("exit 1"))
+        assertTrue(workflow.contains("No APK files were built to package."))
+        assertTrue(workflow.contains("cd artifacts && zip -r ../manus-assistant-apks.zip ."))
+        assertFalse(workflow.contains("touch manus-assistant-apks.zip"))
     }
 }

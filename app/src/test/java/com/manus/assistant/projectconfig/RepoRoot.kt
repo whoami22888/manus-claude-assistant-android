@@ -1,4 +1,4 @@
-package com.example.personalassistant.projectconfig
+package com.manus.assistant.projectconfig
 
 import java.io.File
 
