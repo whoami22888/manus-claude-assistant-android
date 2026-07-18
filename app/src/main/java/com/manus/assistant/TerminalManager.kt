@@ -63,6 +63,8 @@ class TerminalManager(private val rootDir: File) {
     companion object {
         private const val MAX_LIST_ENTRIES = 100
         private const val MAX_FILE_CHARS = 4000
+        // Keep this summary limited to stable toolchain values that are unlikely to drift.
+        // NDK/CMake versions are maintained in Gradle/CI configuration and may change independently.
         private const val BUILD_TOOLS_INFO =
             "Build tools: AGP 8.2.0, Kotlin 1.9.0, Gradle 8.7, minSdk 24, targetSdk 34"
     }
