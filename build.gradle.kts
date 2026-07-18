@@ -6,7 +6,13 @@ buildscript {
         if (googleMavenRepositoryUrl.isNullOrBlank()) {
             google()
         } else {
-            maven(url = googleMavenRepositoryUrl)
+            require(googleMavenRepositoryUrl.startsWith("https://")) {
+                "googleMavenRepositoryUrl must use HTTPS, got: $googleMavenRepositoryUrl"
+            }
+            maven {
+                url = uri(googleMavenRepositoryUrl)
+                name = "google"
+            }
         }
         mavenCentral()
     }
