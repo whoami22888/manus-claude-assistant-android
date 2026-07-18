@@ -38,7 +38,7 @@ jobs:
       - name: Decode release keystore
         # Only runs when the KEYSTORE_FILE secret is configured in the repo.
         # Falls back to debug signing when the secret is absent.
-        if: ${{ secrets.KEYSTORE_FILE != '' }}
+        if: secrets.KEYSTORE_FILE
         run: |
           echo "${{ secrets.KEYSTORE_FILE }}" | base64 --decode > "${{ runner.temp }}/release.jks"
           echo "KEYSTORE_PATH=${{ runner.temp }}/release.jks" >> "$GITHUB_ENV"
