@@ -39,6 +39,8 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener, Recogniti
     private val assistantEngine by lazy { AssistantEngine(this) }
     private val cloudStorageManager by lazy { CloudStorageManager(this) }
     private val pythonScriptManager by lazy { PythonScriptManager(this) }
+    private val skillsManager by lazy { SkillsManager(this) }
+    private val terminalManager by lazy { TerminalManager(filesDir) }
 
     // Chat UI
     private lateinit var recyclerViewChat: RecyclerView
@@ -217,6 +219,54 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener, Recogniti
         val lower = input.lowercase(Locale.getDefault())
         appendMessage(ChatMessage.Sender.USER, input)
         when {
+            lower == "skills dashboard" -> {
+                appendMessage(
+                    ChatMessage.Sender.SYSTEM,
+                    skillsManager.dashboardMessage(assistantEngine.isTurboModeEnabled())
+                )
+            }
+            lower == "list skills" || lower == "show skills" -> {
+                appendMessage(ChatMessage.Sender.SYSTEM, skillsManager.listSkillsMessage())
+            }
+            lower.startsWith("add skill ") -> {
+                val name = input.substringAfter("add skill", "").trim()
+                appendMessage(ChatMessage.Sender.SYSTEM, skillsManager.addSkill(name))
+            }
+            lower.startsWith("remove skill ") -> {
+                val name = input.substringAfter("remove skill", "").trim()
+                appendMessage(ChatMessage.Sender.SYSTEM, skillsManager.removeSkill(name))
+            }
+            lower.startsWith("update skill ") -> {
+                val payload = input.substringAfter("update skill", "").trim()
+                val parts = payload.split(" to ", limit = 2)
+                val msg = if (parts.size == 2) {
+                    skillsManager.updateSkill(parts[0], parts[1])
+                } else {
+                    "Usage: update skill <old name> to <new name>"
+                }
+                appendMessage(ChatMessage.Sender.SYSTEM, msg)
+            }
+            lower == "terminal help" -> {
+                appendMessage(ChatMessage.Sender.SYSTEM, terminalManager.run("help"))
+            }
+            lower.startsWith("terminal run ") -> {
+                val command = input.substringAfter("terminal run", "").trim()
+                appendMessage(ChatMessage.Sender.SYSTEM, terminalManager.run(command))
+            }
+            lower == "turbo on" -> {
+                assistantEngine.setTurboMode(true)
+                appendMessage(ChatMessage.Sender.SYSTEM, "Turbo mode enabled.")
+            }
+            lower == "turbo off" -> {
+                assistantEngine.setTurboMode(false)
+                appendMessage(ChatMessage.Sender.SYSTEM, "Turbo mode disabled.")
+            }
+            lower == "turbo status" -> {
+                appendMessage(
+                    ChatMessage.Sender.SYSTEM,
+                    "Turbo mode is ${if (assistantEngine.isTurboModeEnabled()) "ON" else "OFF"}."
+                )
+            }
             lower.contains("upload to cloud") || lower.contains("cloud upload") -> {
                 pendingOpenDocumentAction = OpenDocumentAction.CLOUD_UPLOAD
                 openDocumentLauncher.launch(arrayOf("*/*"))
@@ -266,12 +316,21 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener, Recogniti
         btnMic.isEnabled = false
         setStatus(getString(R.string.status_processing))
         lifecycleScope.launch {
-            val response = assistantEngine.processInput(input)
-            appendMessage(ChatMessage.Sender.ASSISTANT, response)
-            speak(response)
-            btnSend.isEnabled = true
-            btnMic.isEnabled = true
-            setStatus(getString(R.string.status_ready))
+            try {
+                val response = assistantEngine.processInput(input)
+                appendMessage(ChatMessage.Sender.ASSISTANT, response)
+                speak(response)
+            } catch (e: Exception) {
+                Log.e(TAG, "Assistant processing failed", e)
+                appendMessage(
+                    ChatMessage.Sender.SYSTEM,
+                    "Sorry, something went wrong while processing that request."
+                )
+            } finally {
+                btnSend.isEnabled = true
+                btnMic.isEnabled = true
+                setStatus(getString(R.string.status_ready))
+            }
         }
     }
 

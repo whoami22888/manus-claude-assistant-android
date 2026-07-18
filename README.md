@@ -11,6 +11,9 @@ This Android application is a personal assistant with voice recognition, text-to
 - **Native Integration**: Uses JNI to connect to a small C++ core library for command handling
 - **Python Script Loading**: Loads bundled or user-selected `.py` files for future assistant extensions
 - **Groq Integration**: Uses the Groq chat API when an API key is configured, with an offline fallback when it is not
+- **Skills Dashboard & Updater**: Supports listing, adding, updating, and removing skills in-app
+- **Sandbox Terminal Commands**: Supports safe terminal-like commands (`pwd`, `ls`, `cat`, `date`, `echo`, `build-tools`)
+- **Turbo Mode**: Supports `turbo on/off/status` to force fast local-response mode
 
 ## Project Structure
 
