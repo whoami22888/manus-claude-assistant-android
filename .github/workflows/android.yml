@@ -73,8 +73,13 @@ jobs:
       - name: Package APKs into zip
         run: |
           mkdir -p artifacts
-          cp app/build/outputs/apk/debug/*.apk artifacts/ 2>/dev/null || true
-          cp app/build/outputs/apk/release/*.apk artifacts/ 2>/dev/null || true
+          # Copy each variant only when its build step ran; fail loudly on unexpected errors.
+          if [ -d app/build/outputs/apk/debug ]; then
+            cp app/build/outputs/apk/debug/*.apk artifacts/
+          fi
+          if [ -d app/build/outputs/apk/release ]; then
+            cp app/build/outputs/apk/release/*.apk artifacts/
+          fi
           cd artifacts && zip -r ../manus-assistant-apks.zip .
 
       - name: Upload APK zip
