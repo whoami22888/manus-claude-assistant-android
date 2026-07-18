@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
     inputs:
       build_type:
-        description: 'Build type (debug or release)'
+        description: 'Build type (debug, release, or both)'
         required: false
         default: 'debug'
         type: choice
@@ -93,6 +93,7 @@ jobs:
           retention-days: 14
 
       - name: Upload debug APK
+        if: ${{ github.event_name != 'workflow_dispatch' || (github.event_name == 'workflow_dispatch' && (github.event.inputs.build_type == 'debug' || github.event.inputs.build_type == 'both')) }}
         uses: actions/upload-artifact@v4
         with:
           name: debug-apk
@@ -100,6 +101,7 @@ jobs:
           retention-days: 14
 
       - name: Upload release APK
+        if: ${{ github.event_name == 'workflow_dispatch' && (github.event.inputs.build_type == 'release' || github.event.inputs.build_type == 'both') }}
         uses: actions/upload-artifact@v4
         with:
           name: release-apk
