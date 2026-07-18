@@ -77,8 +77,8 @@ jobs:
           for apk in app/build/outputs/apk/*/*.apk; do
             cp "$apk" artifacts/
           done
-          shopt -u nullglob
           apks=(artifacts/*.apk)
+          shopt -u nullglob
           if [ ${#apks[@]} -gt 0 ]; then
             cd artifacts && zip -r ../manus-assistant-apks.zip .
           else
