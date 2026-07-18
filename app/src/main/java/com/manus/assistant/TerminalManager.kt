@@ -17,7 +17,7 @@ class TerminalManager(private val rootDir: File) {
             "date" -> "DATE: ${SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date())}"
             "echo" -> parts.drop(1).joinToString(" ")
             "cat" -> readFile(parts.drop(1).firstOrNull())
-            "build-tools" -> "Build tools: AGP 8.2.0, Kotlin 1.9.0, Gradle 8.7, NDK 26.1.10909125, CMake 3.22.1, minSdk 24, targetSdk 34"
+            "build-tools" -> "Build tools: AGP 8.2.0, Kotlin 1.9.0, Gradle 8.7, NDK 27.3.13750724, CMake 3.31.5, minSdk 24, targetSdk 34"
             else -> "Unsupported command \"${parts.first()}\". Type \"terminal help\"."
         }
     }
