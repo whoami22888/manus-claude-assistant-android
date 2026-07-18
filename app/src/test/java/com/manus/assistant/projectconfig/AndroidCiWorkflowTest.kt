@@ -15,7 +15,7 @@ import java.io.File
  * the same indentation.
  */
 class AndroidCiWorkflowTest {
-    private val stepStarterPrefixes = listOf("- name:", "- uses:", "- run:")
+    private val stepStarterPrefixes = listOf("- name:", "- uses:")
 
     private lateinit var lines: List<String>
     private lateinit var stepLines: List<String>

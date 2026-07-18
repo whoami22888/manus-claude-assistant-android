@@ -1,3 +1,4 @@
+// Top-level settings script lookup for optional Google Maven mirror override.
 val googleMavenRepositoryUrl = providers.gradleProperty("googleMavenRepositoryUrl").orNull
     ?.trim()
     ?.takeIf { it.isNotEmpty() }
