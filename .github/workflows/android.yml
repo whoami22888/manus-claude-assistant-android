@@ -82,7 +82,7 @@ jobs:
           if [ ${#apks[@]} -gt 0 ]; then
             cd artifacts && zip -r ../manus-assistant-apks.zip .
           else
-            echo "::warning::No APK files were built. This can happen when debug build fails or when workflow_dispatch build_type excludes release/both. Creating empty archive placeholder."
+            echo "::warning::No APK files were built. This can happen when debug build fails, when release build is skipped (not workflow_dispatch with release/both), or when builds fail. Creating empty archive placeholder."
             touch manus-assistant-apks.zip
           fi
 
