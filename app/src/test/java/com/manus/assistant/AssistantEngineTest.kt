@@ -114,6 +114,21 @@ class AssistantEngineTest {
         assertTrue(response.contains("Native core", ignoreCase = true))
     }
 
+    @Test fun `skills dashboard command is recognized`() {
+        val response = respond("skills dashboard")
+        assertTrue(response.contains("skills dashboard", ignoreCase = true))
+    }
+
+    @Test fun `terminal help command is recognized`() {
+        val response = respond("terminal help")
+        assertTrue(response.contains("terminal", ignoreCase = true))
+    }
+
+    @Test fun `turbo on command is recognized`() {
+        val response = respond("turbo on")
+        assertTrue(response.contains("turbo mode", ignoreCase = true))
+    }
+
     // -----------------------------------------------------------------------
     // Help
     // -----------------------------------------------------------------------

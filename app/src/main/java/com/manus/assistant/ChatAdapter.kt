@@ -4,7 +4,6 @@ import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import android.widget.FrameLayout
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 
@@ -19,7 +18,6 @@ class ChatAdapter(private val messages: List<ChatMessage>) :
     RecyclerView.Adapter<ChatAdapter.MessageViewHolder>() {
 
     inner class MessageViewHolder(view: View) : RecyclerView.ViewHolder(view) {
-        val container: FrameLayout = view.findViewById(R.id.messageContainer)
         val tvMessage: TextView = view.findViewById(R.id.tvMessage)
     }
 
