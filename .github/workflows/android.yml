@@ -81,8 +81,8 @@ jobs:
           if compgen -G "artifacts/*.apk" > /dev/null; then
             cd artifacts && zip -r ../manus-assistant-apks.zip .
           else
-            echo "No APK files found; creating empty archive placeholder."
-            touch manus-assistant-apks.zip
+            echo "No APK files found under app/build/outputs/apk; failing packaging step."
+            exit 1
           fi
 
       - name: Upload APK zip
