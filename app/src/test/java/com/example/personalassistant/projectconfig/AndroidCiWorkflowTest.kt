@@ -47,7 +47,16 @@ class AndroidCiWorkflowTest {
         get() = stepBaseIndent + 2
 
     private fun keyIndent(keyName: String): Int {
-        val line = stepLines.drop(1).firstOrNull { it.trimStart().startsWith("$keyName:") }
+        val runLineIndex = stepLines.indexOfFirst { it.trimStart().startsWith("run:") }
+        val searchLines = if (runLineIndex != -1) {
+            val runIndent = leadingSpaces(stepLines[runLineIndex])
+            stepLines.filterIndexed { index, line ->
+                index <= runLineIndex || (line.isNotBlank() && leadingSpaces(line) <= runIndent)
+            }
+        } else {
+            stepLines
+        }
+        val line = searchLines.drop(1).firstOrNull { it.trimStart().startsWith("$keyName:") }
         assertTrue("Expected the step to contain a '$keyName:' key", line != null)
         return leadingSpaces(line!!)
     }
@@ -59,16 +68,27 @@ class AndroidCiWorkflowTest {
     }
 
     @Test
-    fun `if condition uses the bare secrets expression without curly braces`() {
-        val ifLine = stepLines.first { it.trimStart().startsWith("if:") }.trim()
-        assertEquals("if: secrets.KEYSTORE_FILE", ifLine)
+    fun `if condition uses the GitHub Actions expression for the keystore secret`() {
+        val runLineIndex = stepLines.indexOfFirst { it.trimStart().startsWith("run:") }
+        val searchLines = if (runLineIndex != -1) {
+            val runIndent = leadingSpaces(stepLines[runLineIndex])
+            stepLines.filterIndexed { index, line ->
+                index <= runLineIndex || (line.isNotBlank() && leadingSpaces(line) <= runIndent)
+            }
+        } else {
+            stepLines
+        }
+        val ifLine = searchLines.firstOrNull { it.trimStart().startsWith("if:") }?.trim()
+        assertEquals("if: \${{ secrets.KEYSTORE_FILE != '' }}", ifLine)
     }
 
     @Test
     fun `run block scalar is nested deeper than the run key and contains the keystore commands`() {
         val runIndent = keyIndent("run")
         val runLineIndex = stepLines.indexOfFirst { it.trimStart().startsWith("run:") }
-        val body = stepLines.drop(runLineIndex + 1).filter { it.isNotBlank() }
+        val body = stepLines.drop(runLineIndex + 1)
+            .takeWhile { leadingSpaces(it) > runIndent || it.isBlank() }
+            .filter { it.isNotBlank() }
 
         assertTrue("run: block should contain command lines", body.isNotEmpty())
         body.forEach { line ->
@@ -92,17 +112,36 @@ class AndroidCiWorkflowTest {
         var index = 0
         while (index < lines.size) {
             val line = lines[index]
-            if (line.trim().startsWith("- name:")) {
+            if (line.trim().startsWith("- ")) {
                 val base = leadingSpaces(line)
                 val expectedKeyIndent = base + 2
                 var j = index + 1
+                var insideRunBlock = false
+                var runBlockIndent = 0
                 while (j < lines.size && !(lines[j].isNotBlank() && leadingSpaces(lines[j]) <= base)) {
-                    val trimmed = lines[j].trimStart()
-                    if (trimmed.startsWith("if:")) {
+                    val lineJ = lines[j]
+                    if (lineJ.isBlank()) {
+                        j++
+                        continue
+                    }
+                    val indentJ = leadingSpaces(lineJ)
+                    if (insideRunBlock) {
+                        if (indentJ <= runBlockIndent) {
+                            insideRunBlock = false
+                        } else {
+                            j++
+                            continue
+                        }
+                    }
+                    val trimmed = lineJ.trimStart()
+                    if (trimmed.startsWith("run:")) {
+                        insideRunBlock = true
+                        runBlockIndent = indentJ
+                    } else if (trimmed.startsWith("if:")) {
                         assertEquals(
-                            "Step starting at line ${index + 1} has an 'if:' key misaligned with its 'name:' key",
+                            "Step starting at line ${index + 1} has an 'if:' key misaligned with its step starter",
                             expectedKeyIndent,
-                            leadingSpaces(lines[j])
+                            indentJ
                         )
                     }
                     j++

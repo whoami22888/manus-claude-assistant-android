@@ -79,7 +79,7 @@ class AndroidCiWorkflowTest {
             stepLines
         }
         val ifLine = searchLines.firstOrNull { it.trimStart().startsWith("if:") }?.trim()
-        assertEquals("if: \\${{ secrets.KEYSTORE_FILE != '' }}", ifLine)
+        assertEquals("if: \${{ secrets.KEYSTORE_FILE != '' }}", ifLine)
     }
 
     @Test

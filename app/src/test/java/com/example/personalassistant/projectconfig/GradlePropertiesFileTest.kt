@@ -54,6 +54,7 @@ class GradlePropertiesFileTest {
             .filter { it.isNotEmpty() && !it.startsWith("#") && it.contains("=") }
             .map { it.substringBefore("=").trim() }
 
-        assertEquals("Duplicate keys should not appear in gradle.properties", keys.size, keys.toSet().size)
+        val duplicates = keys.groupBy { it }.filterValues { it.size > 1 }.keys
+        assertTrue("Duplicate keys found in gradle.properties: $duplicates", duplicates.isEmpty())
     }
 }
