@@ -65,7 +65,7 @@ jobs:
         run: ./gradlew assembleDebug --no-daemon
 
       - name: Build release APK
-        if: ${{ github.event_name == 'workflow_dispatch' && (inputs.build_type == 'release' || inputs.build_type == 'both') }}
+        if: ${{ github.event_name == 'workflow_dispatch' && (github.event.inputs.build_type == 'release' || github.event.inputs.build_type == 'both') }}
         run: ./gradlew assembleRelease --no-daemon
         env:
           GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
@@ -82,7 +82,7 @@ jobs:
           if [ ${#apks[@]} -gt 0 ]; then
             cd artifacts && zip -r ../manus-assistant-apks.zip .
           else
-            echo "::warning::No APK files were built. This can happen when debug build fails, when release build is skipped (not workflow_dispatch with release/both), or when builds fail. Creating empty archive placeholder."
+            echo "::warning::No APK files were built. This can happen when builds fail or when release build is skipped (not workflow_dispatch with release/both). Creating empty archive placeholder."
             touch manus-assistant-apks.zip
           fi
 
