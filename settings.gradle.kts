@@ -1,13 +1,12 @@
-fun Settings.googleMavenRepositoryOverride(): String? =
-    providers.gradleProperty("googleMavenRepositoryUrl")
-        .orElse(providers.environmentVariable("GOOGLE_MAVEN_REPOSITORY_URL"))
-        .orNull
-        ?.trim()
-        ?.takeIf { it.isNotEmpty() }
-
 pluginManagement {
     repositories {
-        val googleMavenRepositoryUrl = settings.googleMavenRepositoryOverride()
+        // Keep this lookup inline: pluginManagement is compiled in an earlier
+        // settings phase and cannot see helper declarations reliably.
+        val googleMavenRepositoryUrl = settings.providers.gradleProperty("googleMavenRepositoryUrl")
+            .orElse(settings.providers.environmentVariable("GOOGLE_MAVEN_REPOSITORY_URL"))
+            .orNull
+            ?.trim()
+            ?.takeIf { it.isNotEmpty() }
 
         // Allow CI/developers to override the Google Maven endpoint when
         // official Google infrastructure is unreachable from their network.
@@ -28,7 +27,11 @@ pluginManagement {
 dependencyResolutionManagement {
     repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
     repositories {
-        val googleMavenRepositoryUrl = settings.googleMavenRepositoryOverride()
+        val googleMavenRepositoryUrl = settings.providers.gradleProperty("googleMavenRepositoryUrl")
+            .orElse(settings.providers.environmentVariable("GOOGLE_MAVEN_REPOSITORY_URL"))
+            .orNull
+            ?.trim()
+            ?.takeIf { it.isNotEmpty() }
 
         if (googleMavenRepositoryUrl != null) {
             maven(url = uri(googleMavenRepositoryUrl))
