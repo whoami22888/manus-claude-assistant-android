@@ -130,7 +130,7 @@ class AndroidCiWorkflowTest {
     }
 
     @Test
-    fun `apk packaging step fails when no apks are copied`() {
+    fun `apk packaging step fails when no APKs are copied`() {
         val workflow = lines.joinToString("\n")
         assertTrue(workflow.contains("apks=(artifacts/*.apk)"))
         assertTrue(workflow.contains("if [ \${#apks[@]} -eq 0 ]; then"))
