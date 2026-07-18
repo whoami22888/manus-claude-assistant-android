@@ -61,7 +61,7 @@ jobs:
         run: ./gradlew test --no-daemon
 
       - name: Build debug APK
-        if: ${{ github.event_name != 'workflow_dispatch' || inputs.build_type == 'debug' || inputs.build_type == 'both' }}
+        if: ${{ github.event_name != 'workflow_dispatch' || github.event.inputs.build_type == 'debug' || github.event.inputs.build_type == 'both' }}
         run: ./gradlew assembleDebug --no-daemon
 
       - name: Build release APK
@@ -82,8 +82,8 @@ jobs:
           if [ ${#apks[@]} -gt 0 ]; then
             cd artifacts && zip -r ../manus-assistant-apks.zip .
           else
-            echo "::warning::No APK files were built. Creating empty archive placeholder."
-            touch manus-assistant-apks.zip
+            echo "::error::No APK files were built."
+            exit 1
           fi
 
       - name: Upload APK zip

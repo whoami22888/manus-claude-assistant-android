@@ -112,7 +112,11 @@ class AndroidCiWorkflowTest {
         var index = 0
         while (index < lines.size) {
             val line = lines[index]
-            if (line.trim().startsWith("- ")) {
+            val trimmedStarter = line.trimStart()
+            val isStepStarter = trimmedStarter.startsWith("- name:") ||
+                trimmedStarter.startsWith("- uses:") ||
+                trimmedStarter.startsWith("- run:")
+            if (isStepStarter) {
                 val base = leadingSpaces(line)
                 val expectedKeyIndent = base + 2
                 var j = index + 1
