@@ -1,10 +1,12 @@
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
 }
 
 // The Android app contains only an optional app-owned HTTPS endpoint; no provider key is packaged.
-val localProperties = java.util.Properties().also { props ->
+val localProperties = Properties().also { props ->
     val f = rootProject.file("local.properties")
     if (f.exists()) props.load(f.inputStream())
 }
