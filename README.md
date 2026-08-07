@@ -1,93 +1,28 @@
-# Manus Claude Assistant — Android
+# Personal Assistant — Android agent shell
 
-An Android personal-assistant app with voice input/output, Groq AI integration, a JNI-backed native command layer, skills management, a sandboxed terminal, and local/cloud storage helpers.
+A dark, mobile-first agent dashboard with text chat, voice input/output, local skills, safe file placeholders, and a provider-neutral backend boundary.
 
-## Features
+## Architecture and safety
 
-- **Voice Recognition** — uses Android's built-in speech recognizer for hands-free input
-- **Text-to-Speech** — spoken responses via Android's TTS engine
-- **Groq AI** — chat via the Groq API (`llama-3.3-70b-versatile`) with a rolling conversation history; falls back to offline rule-based responses when a key is not configured or the network is unavailable
-- **Turbo Mode** — `turbo on/off/status` forces all responses through the local rule engine for zero-latency replies
-- **Skills Dashboard** — list, add, update, and remove named skills; view turbo-mode status
-- **Sandbox Terminal** — safe in-app terminal commands: `pwd`, `ls`, `cat`, `date`, `echo`, `build-tools`
-- **Native JNI Layer** — a small C++ core (`assistantcore` shared library) handles `native status`, `native help`, and `native process` commands; a pure-Kotlin fallback is used automatically when the library is not available
-- **Local File Actions** — upload and download files through Android's Storage Access Framework (no storage permissions required)
-- **Cloud Storage Placeholders** — prototype upload/download/list flows ready to be wired to a real cloud back-end
-- **Python Script Loading** — load bundled or user-selected `.py` files for future assistant extensions
+- The APK contains **no AI-provider key** and never calls DeepSeek (or another provider) directly.
+- `AgentBackendClient` calls only a configured, strict HTTPS app-owned endpoint and accepts an optional Google ID token supplied by the host integration.
+- If `agent.backend.url`/`AGENT_BACKEND_URL` is absent, invalid, or unreachable, the app keeps working through its local/offline rule engine.
+- Local `ApprovalPolicy` stops requests involving send, post, delete, purchase, permission, access, account, or security until explicit human approval. Dashboard quick actions are explanatory only (Skills opens the existing skills view).
+- No Google auth SDK, Firebase SDK, fake login, or external Android project configuration is included. Owner Firebase/Google setup is required before identity-backed backend use.
 
-## Project Structure
+The sample Functions endpoint is in [`backend/`](backend/README.md). It verifies a Google identity token, allow-lists owner emails, uses a server-only DeepSeek secret, makes flash/pro routing explicit, and returns only `{reply}`.
 
-```
-app/src/main/
-├── java/com/manus/assistant/   # Kotlin source files
-│   ├── MainActivity.kt          # UI and input routing
-│   ├── AssistantEngine.kt       # Groq AI + local-rule orchestrator
-│   ├── GroqApiClient.kt         # Groq chat-completions HTTP client
-│   ├── SkillsManager.kt         # Persistent skills registry
-│   ├── TerminalManager.kt       # Sandboxed terminal command runner
-│   ├── NativeCommandProcessor.kt# JNI bridge (Kotlin side)
-│   ├── PythonScriptManager.kt   # Python script loader
-│   ├── CloudStorageManager.kt   # Cloud storage placeholder manager
-│   ├── ChatAdapter.kt           # RecyclerView adapter for chat messages
-│   └── ChatMessage.kt           # Chat message data model
-├── cpp/
-│   ├── CMakeLists.txt           # CMake build for the native library
-│   └── native_command_processor.cpp
-├── res/                         # Layouts, strings, drawables
-└── AndroidManifest.xml          # Permissions: RECORD_AUDIO, INTERNET
-```
+## Android setup
 
-## Building
-
-### Prerequisites
-
-| Tool | Version |
-|------|---------|
-| JDK | 17+ |
-| Android SDK | API 24 – 34 |
-| Android NDK | 27.3.13750724 |
-| CMake | 3.31.5 |
-
-### Steps
-
-1. Clone the repository.
-2. Create `local.properties` in the project root and set `sdk.dir=/path/to/Android/Sdk`.
-3. *(Optional)* Add `groq.api.key=<your-key>` to `local.properties`, or export `GROQ_API_KEY` in your shell. The app works without a key using its offline rule engine.
-4. Install NDK and CMake if not already present:
-   ```
-   sdkmanager "ndk;27.3.13750724" "cmake;3.31.5"
-   ```
-5. Build:
-   ```
-   ./gradlew assembleDebug --no-daemon
+1. Create `local.properties` with `sdk.dir=/path/to/Android/Sdk`.
+2. Optionally add `agent.backend.url=https://your-owned-endpoint.example/agent`, or export `AGENT_BACKEND_URL` while building. Do not add provider keys.
+3. Install NDK `27.3.13750724` and CMake `3.31.5`, then run:
+   ```bash
+   ./gradlew testDebugUnitTest assembleDebug --no-daemon
    ```
 
-### Google Maven mirror (optional)
+The endpoint field in Settings is intentionally URL-only and rejects non-HTTPS URLs, credentials, query parameters, and fragments. See `backend/README.md` for deployment, identity, secret, and mandatory approval requirements.
 
-If `dl.google.com` is not reachable from your network, export `GOOGLE_MAVEN_REPOSITORY_URL` or pass `-PgoogleMavenRepositoryUrl=https://your-mirror.example.com/android/maven2`. The setting is respected in both `pluginManagement` (plugin artifacts) and `dependencyResolutionManagement` (library artifacts).
+## Main dependencies
 
-### Release signing (optional)
-
-Set `KEYSTORE_PATH`, `KEYSTORE_PASSWORD`, `KEY_ALIAS`, and `KEY_PASSWORD` environment variables. When absent the build falls back to the debug key automatically.
-
-## CI
-
-GitHub Actions (`android.yml`) runs on every push/PR to `main`:
-
-1. Sets up JDK 17 and Android SDK
-2. Installs NDK 27.3.13750724 and CMake 3.31.5
-3. Runs unit tests (`./gradlew test`)
-4. Builds both debug and release APKs
-5. Uploads APKs as workflow artifacts (retained 14 days)
-
-## Dependencies
-
-| Library | Purpose |
-|---------|---------|
-| AndroidX (core-ktx, appcompat, recyclerview) | UI and Jetpack utilities |
-| Material Components | UI theming |
-| OkHttp 4.12 | Groq API HTTP calls |
-| Kotlin Coroutines 1.7 | Off-main-thread networking |
-| Lifecycle Runtime KTX 2.7 | `lifecycleScope` coroutine support |
-| JUnit 4 / OkHttp MockWebServer | Unit testing |
-| Espresso | Instrumentation testing |
+AndroidX, Material Components, OkHttp, Kotlin coroutines, lifecycle runtime, and JUnit/MockWebServer. Cloud/provider credentials are backend-only.

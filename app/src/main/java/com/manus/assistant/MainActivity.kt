@@ -9,7 +9,6 @@ import android.speech.RecognitionListener
 import android.speech.RecognizerIntent
 import android.speech.SpeechRecognizer
 import android.speech.tts.TextToSpeech
-import android.text.InputType
 import android.util.Log
 import android.view.inputmethod.EditorInfo
 import android.widget.Button
@@ -32,11 +31,10 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener, Recogniti
     companion object {
         private const val TAG = "MainActivity"
         private const val REQUEST_RECORD_AUDIO_PERMISSION = 200
-        private const val PREFS_NAME = "app_prefs"
-        private const val PREF_API_KEY = "groq_api_key"
     }
 
     private val assistantEngine by lazy { AssistantEngine(this) }
+    private val agentPlanStore by lazy { AgentPlanStore(this) }
     private val cloudStorageManager by lazy { CloudStorageManager(this) }
     private val pythonScriptManager by lazy { PythonScriptManager(this) }
     private val skillsManager by lazy { SkillsManager(this) }
@@ -49,6 +47,11 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener, Recogniti
     private lateinit var btnSend: Button
     private lateinit var btnMic: ImageButton
     private lateinit var btnSettings: ImageButton
+    private lateinit var btnResearch: Button
+    private lateinit var btnPlan: Button
+    private lateinit var btnSkills: Button
+    private lateinit var btnAutomations: Button
+    private lateinit var btnConnect: Button
 
     private val chatMessages = mutableListOf<ChatMessage>()
     private lateinit var chatAdapter: ChatAdapter
@@ -149,6 +152,11 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener, Recogniti
         btnSend          = findViewById(R.id.btnSend)
         btnMic           = findViewById(R.id.btnMic)
         btnSettings      = findViewById(R.id.btnSettings)
+        btnResearch      = findViewById(R.id.btnResearch)
+        btnPlan          = findViewById(R.id.btnPlan)
+        btnSkills        = findViewById(R.id.btnSkills)
+        btnAutomations   = findViewById(R.id.btnAutomations)
+        btnConnect       = findViewById(R.id.btnConnect)
 
         chatAdapter = ChatAdapter(chatMessages)
         recyclerViewChat.apply {
@@ -165,6 +173,11 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener, Recogniti
         btnSend.setOnClickListener { sendMessage() }
         btnMic.setOnClickListener { toggleVoiceInput() }
         btnSettings.setOnClickListener { showApiKeyDialog() }
+        btnResearch.setOnClickListener { appendMessage(ChatMessage.Sender.SYSTEM, "Research opens a planning prompt; verify sources before acting.") }
+        btnPlan.setOnClickListener { showCurrentPlan() }
+        btnSkills.setOnClickListener { routeInput("skills dashboard") }
+        btnAutomations.setOnClickListener { appendMessage(ChatMessage.Sender.SYSTEM, "Automations are disabled in this shell. Any future run needs explicit approval.") }
+        btnConnect.setOnClickListener { appendMessage(ChatMessage.Sender.SYSTEM, "Connections require owner setup and explicit approval; no account is connected.") }
         etInput.setOnEditorActionListener { _, actionId, _ ->
             if (actionId == EditorInfo.IME_ACTION_SEND) {
                 sendMessage()
@@ -213,12 +226,41 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener, Recogniti
      * - local / cloud file actions → SAF placeholders
      * - Python script loading      → asset or document loader
      * - "clear"                    → reset conversation history
-     * - everything else            → AssistantEngine (Groq + local fallback)
+     * - everything else            → AssistantEngine (backend + local fallback)
      */
     private fun routeInput(input: String) {
         val lower = input.lowercase(Locale.getDefault())
         appendMessage(ChatMessage.Sender.USER, input)
         when {
+            lower.startsWith("plan ") -> {
+                val goal = input.substringAfter("plan", "").trim()
+                if (goal.isBlank()) {
+                    appendMessage(ChatMessage.Sender.SYSTEM, "Usage: plan <goal>. Plans stay on this device and never run actions automatically.")
+                } else {
+                    val plan = AgentPlanner.create(goal)
+                    agentPlanStore.save(plan)
+                    appendMessage(ChatMessage.Sender.SYSTEM, plan.summary())
+                }
+            }
+            lower == "show plan" || lower == "current plan" -> showCurrentPlan()
+            lower.startsWith("complete task ") -> {
+                val taskId = input.substringAfter("complete task", "").trim().lowercase(Locale.getDefault())
+                val current = agentPlanStore.load()
+                if (current == null) appendMessage(ChatMessage.Sender.SYSTEM, "No local plan yet. Start with: plan <goal>")
+                else {
+                    val update = current.complete(taskId)
+                    agentPlanStore.save(update.plan)
+                    appendMessage(ChatMessage.Sender.SYSTEM, update.message)
+                }
+            }
+            lower == "reset plan" -> {
+                val current = agentPlanStore.load()
+                if (current == null) appendMessage(ChatMessage.Sender.SYSTEM, "No local plan to reset.")
+                else {
+                    agentPlanStore.save(current.reset())
+                    appendMessage(ChatMessage.Sender.SYSTEM, "Plan reset. ${current.reset().progressMessage()}")
+                }
+            }
             lower == "skills dashboard" -> {
                 appendMessage(
                     ChatMessage.Sender.SYSTEM,
@@ -311,6 +353,14 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener, Recogniti
         }
     }
 
+    private fun showCurrentPlan() {
+        val plan = agentPlanStore.load()
+        appendMessage(
+            ChatMessage.Sender.SYSTEM,
+            plan?.summary() ?: "No local plan yet. Type: plan <goal>. Plans are review-only and never execute actions automatically."
+        )
+    }
+
     private fun processWithAssistant(input: String) {
         btnSend.isEnabled = false
         btnMic.isEnabled = false
@@ -359,32 +409,28 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener, Recogniti
     }
 
     // -----------------------------------------------------------------------
-    // API Key Settings
+    // -----------------------------------------------------------------------
+    // Backend endpoint settings (never accepts provider keys)
     // -----------------------------------------------------------------------
 
     private fun showApiKeyDialog() {
-        val prefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
-        val currentKey = prefs.getString(PREF_API_KEY, "") ?: ""
+        val prefs = getSharedPreferences(AssistantEngine.PREFS_NAME, Context.MODE_PRIVATE)
         val editText = EditText(this).apply {
-            setText(currentKey)
-            // VISIBLE_PASSWORD keeps the key readable (the user is intentionally
-            // inspecting and editing it) while avoiding password-manager autofill.
-            inputType = InputType.TYPE_CLASS_TEXT or InputType.TYPE_TEXT_VARIATION_VISIBLE_PASSWORD
-            hint = getString(R.string.api_key_hint)
+            setText(prefs.getString(AssistantEngine.PREF_BACKEND_URL, BuildConfig.AGENT_BACKEND_URL))
+            hint = getString(R.string.backend_url_hint)
+            inputType = android.text.InputType.TYPE_CLASS_TEXT or android.text.InputType.TYPE_TEXT_VARIATION_URI
             setPadding(48, 24, 48, 24)
         }
         AlertDialog.Builder(this)
-            .setTitle(R.string.api_key_title)
-            .setMessage(R.string.api_key_message)
+            .setTitle(R.string.backend_url_title)
+            .setMessage(R.string.backend_url_message)
             .setView(editText)
             .setPositiveButton(R.string.action_save) { _, _ ->
-                val newKey = editText.text.toString().trim()
-                prefs.edit().putString(PREF_API_KEY, newKey).apply()
-                val msg = if (newKey.isBlank())
-                    getString(R.string.api_key_cleared)
-                else
-                    getString(R.string.api_key_saved)
-                appendMessage(ChatMessage.Sender.SYSTEM, msg)
+                val value = editText.text.toString().trim()
+                if (value.isBlank() || BackendUrlConfig.isValid(value)) {
+                    prefs.edit().putString(AssistantEngine.PREF_BACKEND_URL, value).apply()
+                    appendMessage(ChatMessage.Sender.SYSTEM, if (value.isBlank()) getString(R.string.backend_url_cleared) else getString(R.string.backend_url_saved))
+                } else appendMessage(ChatMessage.Sender.SYSTEM, getString(R.string.backend_url_invalid))
             }
             .setNegativeButton(R.string.action_cancel, null)
             .show()

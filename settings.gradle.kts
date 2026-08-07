@@ -16,9 +16,8 @@ pluginManagement {
             google()
         }
 
-        // Mirror fallbacks for constrained environments.
-        maven { url = uri("https://maven.aliyun.com/repository/google") }
-        maven { url = uri("https://maven.aliyun.com/repository/public") }
+        // Use only authoritative repositories. Third-party mirrors can return
+        // transient gateway failures during CI dependency resolution.
         gradlePluginPortal()
         mavenCentral()
     }
@@ -40,9 +39,6 @@ dependencyResolutionManagement {
         }
         mavenCentral()
 
-        // Mirror proxies as fallback for constrained environments
-        maven { url = uri("https://maven.aliyun.com/repository/google") }
-        maven { url = uri("https://maven.aliyun.com/repository/public") }
     }
 }
 
