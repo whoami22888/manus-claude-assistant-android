@@ -1,90 +1,35 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:orientation="vertical">
+    android:layout_width="match_parent" android:layout_height="match_parent"
+    android:background="#FF0B0E14" android:orientation="vertical" android:padding="16dp">
 
-    <!-- Header row: title + settings button -->
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="?attr/colorPrimary"
-        android:gravity="center_vertical"
-        android:orientation="horizontal"
-        android:padding="8dp">
-
-        <TextView
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:paddingStart="8dp"
-            android:paddingEnd="8dp"
-            android:text="@string/app_name"
-            android:textColor="?attr/colorOnPrimary"
-            android:textSize="20sp"
-            android:textStyle="bold" />
-
-        <ImageButton
-            android:id="@+id/btnSettings"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:background="?attr/selectableItemBackgroundBorderless"
-            android:contentDescription="@string/settings"
-            android:src="@android:drawable/ic_menu_preferences"
-            android:tint="?attr/colorOnPrimary" />
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:gravity="center_vertical" android:orientation="horizontal">
+        <LinearLayout android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:orientation="vertical">
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="AGENT DESK" android:textColor="#FF7E9CFF" android:textSize="12sp" android:textStyle="bold" />
+            <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="@string/app_name" android:textColor="#FFF5F7FF" android:textSize="27sp" android:textStyle="bold" />
+        </LinearLayout>
+        <ImageButton android:id="@+id/btnSettings" android:layout_width="48dp" android:layout_height="48dp" android:background="@drawable/bg_quick_action" android:contentDescription="@string/settings" android:src="@android:drawable/ic_menu_preferences" android:tint="#FFDCE5FF" />
     </LinearLayout>
 
-    <!-- Chat messages list -->
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/recyclerViewChat"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:clipToPadding="false"
-        android:padding="8dp" />
-
-    <!-- Status bar -->
-    <TextView
-        android:id="@+id/tvStatus"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="@android:color/darker_gray"
-        android:padding="8dp"
-        android:text="@string/status_ready"
-        android:textColor="@android:color/white"
-        android:textSize="13sp" />
-
-    <!-- Input row -->
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:padding="8dp">
-
-        <EditText
-            android:id="@+id/etInput"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:hint="@string/hint_type_message"
-            android:imeOptions="actionSend"
-            android:importantForAutofill="no"
-            android:inputType="text"
-            android:maxLines="3" />
-
-        <ImageButton
-            android:id="@+id/btnMic"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
-            android:contentDescription="@string/btn_mic"
-            android:src="@android:drawable/ic_btn_speak_now" />
-
-        <Button
-            android:id="@+id/btnSend"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/btn_send" />
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="16dp" android:background="@drawable/bg_dashboard_panel" android:orientation="vertical" android:padding="14dp">
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="SYSTEM STATUS" android:textColor="#FF92A4C8" android:textSize="11sp" android:textStyle="bold" />
+        <TextView android:id="@+id/tvStatus" android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="4dp" android:text="@string/status_ready" android:textColor="#FF8EE8B4" android:textSize="15sp" />
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="12dp" android:orientation="horizontal">
+            <Button android:id="@+id/btnResearch" style="@style/Widget.App.QuickAction" android:layout_width="0dp" android:layout_weight="1" android:text="Research" />
+            <Button android:id="@+id/btnPlan" style="@style/Widget.App.QuickAction" android:layout_width="0dp" android:layout_marginStart="8dp" android:layout_weight="1" android:text="Plan" />
+            <Button android:id="@+id/btnSkills" style="@style/Widget.App.QuickAction" android:layout_width="0dp" android:layout_marginStart="8dp" android:layout_weight="1" android:text="Skills" />
+        </LinearLayout>
+        <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:layout_marginTop="8dp" android:orientation="horizontal">
+            <Button android:id="@+id/btnAutomations" style="@style/Widget.App.QuickAction" android:layout_width="0dp" android:layout_weight="1" android:text="Automations" />
+            <Button android:id="@+id/btnConnect" style="@style/Widget.App.QuickAction" android:layout_width="0dp" android:layout_marginStart="8dp" android:layout_weight="1" android:text="Connect" />
+        </LinearLayout>
     </LinearLayout>
 
+    <TextView android:layout_width="wrap_content" android:layout_height="wrap_content" android:layout_marginTop="18dp" android:text="CONVERSATION" android:textColor="#FF92A4C8" android:textSize="11sp" android:textStyle="bold" />
+    <androidx.recyclerview.widget.RecyclerView android:id="@+id/recyclerViewChat" android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:clipToPadding="false" android:paddingTop="8dp" android:paddingBottom="8dp" />
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content" android:background="@drawable/bg_input" android:gravity="center_vertical" android:orientation="horizontal" android:paddingStart="12dp" android:paddingEnd="6dp">
+        <EditText android:id="@+id/etInput" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:background="@android:color/transparent" android:hint="@string/hint_type_message" android:hintTextColor="#FF8F9AB2" android:imeOptions="actionSend" android:importantForAutofill="no" android:inputType="text" android:maxLines="3" android:textColor="#FFF5F7FF" />
+        <ImageButton android:id="@+id/btnMic" android:layout_width="44dp" android:layout_height="44dp" android:background="?attr/selectableItemBackgroundBorderless" android:contentDescription="@string/btn_mic" android:src="@android:drawable/ic_btn_speak_now" android:tint="#FFB9C8FF" />
+        <Button android:id="@+id/btnSend" android:layout_width="wrap_content" android:layout_height="44dp" android:text="@string/btn_send" />
+    </LinearLayout>
 </LinearLayout>
-

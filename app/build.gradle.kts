@@ -3,14 +3,13 @@ plugins {
     id("org.jetbrains.kotlin.android")
 }
 
-// Read local.properties so developers can set groq.api.key there without
-// touching the build file.  CI uses the GROQ_API_KEY environment variable.
+// The Android app contains only an optional app-owned HTTPS endpoint; no provider key is packaged.
 val localProperties = java.util.Properties().also { props ->
     val f = rootProject.file("local.properties")
     if (f.exists()) props.load(f.inputStream())
 }
-val groqApiKey: String =
-    System.getenv("GROQ_API_KEY") ?: localProperties.getProperty("groq.api.key", "")
+val agentBackendUrl: String =
+    System.getenv("AGENT_BACKEND_URL") ?: localProperties.getProperty("agent.backend.url", "")
 
 android {
     namespace = "com.manus.assistant"
@@ -26,8 +25,8 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
-        // Expose the Groq API key to the app via BuildConfig (empty string when unset)
-        buildConfigField("String", "GROQ_API_KEY", "\"$groqApiKey\"")
+        // Endpoint only; credentials remain on the backend.
+        buildConfigField("String", "AGENT_BACKEND_URL", "\"$agentBackendUrl\"")
 
         externalNativeBuild {
             cmake {
@@ -91,7 +90,7 @@ dependencies {
     implementation("androidx.appcompat:appcompat:1.6.1")
     implementation("com.google.android.material:material:1.11.0")
     implementation("androidx.recyclerview:recyclerview:1.3.2")
-    // HTTP client for Groq API calls
+    // HTTP client for the app-owned backend
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
     // Coroutines for off-main-thread API calls
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")

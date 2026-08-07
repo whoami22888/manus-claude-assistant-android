@@ -4,7 +4,7 @@
 -keepattributes SourceFile,LineNumberTable,Signature,*Annotation*,EnclosingMethod
 -keep public class com.manus.assistant.BuildConfig { *; }
 
-# 2. OkHttp + Okio (for GroqApiClient) - more targeted than keeping everything
+# 2. OkHttp + Okio (for AgentBackendClient) - more targeted than keeping everything
 -dontwarn okhttp3.**
 -dontwarn okio.**
 -dontwarn org.conscrypt.**
@@ -30,7 +30,7 @@
 }
 
 # 5. App code - DON'T keep everything, only keep what R8 can't see via reflection
-# Keep models / DTOs used for JSON parsing (Groq responses)
+# Keep models / DTOs used for JSON parsing (backend responses)
 -keep class com.manus.assistant.data.** { *; }
 -keep class com.manus.assistant.model.** { *; }
 -keep class com.manus.assistant.api.** { <fields>; }
@@ -52,6 +52,6 @@
     @kotlinx.serialization.Serializable <fields>;
 }
 
-# 7. Groq / Generic - Keep generic signatures for parsers
+# 7. Agent backend / Generic - Keep generic signatures for parsers
 -keepattributes Signature
 -dontnote com.manus.assistant.**
