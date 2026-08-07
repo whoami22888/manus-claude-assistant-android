@@ -34,6 +34,7 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener, Recogniti
     }
 
     private val assistantEngine by lazy { AssistantEngine(this) }
+    private val agentPlanStore by lazy { AgentPlanStore(this) }
     private val cloudStorageManager by lazy { CloudStorageManager(this) }
     private val pythonScriptManager by lazy { PythonScriptManager(this) }
     private val skillsManager by lazy { SkillsManager(this) }
@@ -173,7 +174,7 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener, Recogniti
         btnMic.setOnClickListener { toggleVoiceInput() }
         btnSettings.setOnClickListener { showApiKeyDialog() }
         btnResearch.setOnClickListener { appendMessage(ChatMessage.Sender.SYSTEM, "Research opens a planning prompt; verify sources before acting.") }
-        btnPlan.setOnClickListener { appendMessage(ChatMessage.Sender.SYSTEM, "Plan turns a goal into reviewable steps; no action runs automatically.") }
+        btnPlan.setOnClickListener { showCurrentPlan() }
         btnSkills.setOnClickListener { routeInput("skills dashboard") }
         btnAutomations.setOnClickListener { appendMessage(ChatMessage.Sender.SYSTEM, "Automations are disabled in this shell. Any future run needs explicit approval.") }
         btnConnect.setOnClickListener { appendMessage(ChatMessage.Sender.SYSTEM, "Connections require owner setup and explicit approval; no account is connected.") }
@@ -231,6 +232,35 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener, Recogniti
         val lower = input.lowercase(Locale.getDefault())
         appendMessage(ChatMessage.Sender.USER, input)
         when {
+            lower.startsWith("plan ") -> {
+                val goal = input.substringAfter("plan", "").trim()
+                if (goal.isBlank()) {
+                    appendMessage(ChatMessage.Sender.SYSTEM, "Usage: plan <goal>. Plans stay on this device and never run actions automatically.")
+                } else {
+                    val plan = AgentPlanner.create(goal)
+                    agentPlanStore.save(plan)
+                    appendMessage(ChatMessage.Sender.SYSTEM, plan.summary())
+                }
+            }
+            lower == "show plan" || lower == "current plan" -> showCurrentPlan()
+            lower.startsWith("complete task ") -> {
+                val taskId = input.substringAfter("complete task", "").trim().lowercase(Locale.getDefault())
+                val current = agentPlanStore.load()
+                if (current == null) appendMessage(ChatMessage.Sender.SYSTEM, "No local plan yet. Start with: plan <goal>")
+                else {
+                    val update = current.complete(taskId)
+                    agentPlanStore.save(update.plan)
+                    appendMessage(ChatMessage.Sender.SYSTEM, update.message)
+                }
+            }
+            lower == "reset plan" -> {
+                val current = agentPlanStore.load()
+                if (current == null) appendMessage(ChatMessage.Sender.SYSTEM, "No local plan to reset.")
+                else {
+                    agentPlanStore.save(current.reset())
+                    appendMessage(ChatMessage.Sender.SYSTEM, "Plan reset. ${current.reset().progressMessage()}")
+                }
+            }
             lower == "skills dashboard" -> {
                 appendMessage(
                     ChatMessage.Sender.SYSTEM,
@@ -321,6 +351,14 @@ class MainActivity : AppCompatActivity(), TextToSpeech.OnInitListener, Recogniti
                 processWithAssistant(input)
             }
         }
+    }
+
+    private fun showCurrentPlan() {
+        val plan = agentPlanStore.load()
+        appendMessage(
+            ChatMessage.Sender.SYSTEM,
+            plan?.summary() ?: "No local plan yet. Type: plan <goal>. Plans are review-only and never execute actions automatically."
+        )
     }
 
     private fun processWithAssistant(input: String) {
