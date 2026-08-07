@@ -4,7 +4,7 @@ import java.net.URI
 
 /** Immutable, provider-neutral configuration for the app-owned agent endpoint. */
 data class BackendUrlConfig(val rawUrl: String?) {
-    val url: String? = rawUrl?.trim()?.takeIf { isValid(it) }
+    val url: String? = rawUrl?.takeIf { isValid(it) }
     val isValid: Boolean get() = url != null
 
     companion object {

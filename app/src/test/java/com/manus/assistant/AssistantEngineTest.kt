@@ -119,9 +119,9 @@ class AssistantEngineTest {
         assertTrue(response.contains("skills dashboard", ignoreCase = true))
     }
 
-    @Test fun `terminal help command is recognized`() {
+    @Test fun `terminal command is safely unavailable`() {
         val response = respond("terminal help")
-        assertTrue(response.contains("terminal", ignoreCase = true))
+        assertTrue(response.contains("unavailable", ignoreCase = true))
     }
 
     @Test fun `turbo on command is recognized`() {

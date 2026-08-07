@@ -39,7 +39,7 @@ class AssistantEngine(
                 lower.contains("list scripts") || lower.contains("show scripts") -> "Say 'list scripts' to review the Python scripts currently loaded."
                 lower.contains("help") -> "I can help with time and date, local files, cloud placeholders, native checks, Python scripts, and configured agent-backend chat."
                 lower.contains("skills dashboard") -> "Say 'skills dashboard' to view your configured skills and turbo mode status."
-                lower.startsWith("terminal run") || lower.contains("terminal help") -> "Use 'terminal run <command>' for sandbox terminal commands, or 'terminal help' for command help."
+                lower.startsWith("terminal run") || lower.contains("terminal help") -> "Terminal commands are unavailable in this app. I can help draft a reviewable plan; any external action requires explicit approval."
                 lower == "turbo on" -> "Turbo mode is now ON. Responses will use local processing for lower latency."
                 lower == "turbo off" -> "Turbo mode is now OFF. Network agent responses are enabled when a backend URL is set."
                 lower == "turbo status" -> "Turbo mode status can be viewed with 'skills dashboard'."
