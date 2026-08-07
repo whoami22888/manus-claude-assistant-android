@@ -47,15 +47,23 @@ jobs:
         run: chmod +x gradlew
 
       - name: Decode release keystore
-        # Only runs when the KEYSTORE_FILE secret is configured in the repo.
-        # Falls back to debug signing when the secret is absent.
-        if: ${{ secrets.KEYSTORE_FILE != '' }}
+        # Secrets cannot be used in step conditions. Leave the release build
+        # unsigned when no signing material has been configured.
+        env:
+          KEYSTORE_FILE: ${{ secrets.KEYSTORE_FILE }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
         run: |
-          echo "${{ secrets.KEYSTORE_FILE }}" | base64 --decode > "${{ runner.temp }}/release.jks"
+          if [ -z "$KEYSTORE_FILE" ]; then
+            echo "No release keystore configured; continuing without release signing."
+            exit 0
+          fi
+          echo "$KEYSTORE_FILE" | base64 --decode > "${{ runner.temp }}/release.jks"
           echo "KEYSTORE_PATH=${{ runner.temp }}/release.jks" >> "$GITHUB_ENV"
-          echo "KEYSTORE_PASSWORD=${{ secrets.KEYSTORE_PASSWORD }}" >> "$GITHUB_ENV"
-          echo "KEY_ALIAS=${{ secrets.KEY_ALIAS }}" >> "$GITHUB_ENV"
-          echo "KEY_PASSWORD=${{ secrets.KEY_PASSWORD }}" >> "$GITHUB_ENV"
+          echo "KEYSTORE_PASSWORD=$KEYSTORE_PASSWORD" >> "$GITHUB_ENV"
+          echo "KEY_ALIAS=$KEY_ALIAS" >> "$GITHUB_ENV"
+          echo "KEY_PASSWORD=$KEY_PASSWORD" >> "$GITHUB_ENV"
 
       - name: Run unit tests
         run: ./gradlew test --no-daemon
